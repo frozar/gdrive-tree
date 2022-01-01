@@ -57,6 +57,7 @@
     "rules": {}
   },
   "dependencies": {
+    "html-escaper": "^3.0.3",
     "regenerator-runtime": "^0.13.9",
     "tabbable": "^5.2.1"
   }

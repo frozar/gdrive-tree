@@ -1,6 +1,8 @@
 // import { tabbable } from "./tabbable.js";
 import { tabbable } from "tabbable";
 import regeneratorRuntime from "regenerator-runtime";
+import axios from "axios";
+import { escape } from "html-escaper";
 
 // Client ID and API key from the Developer Console
 let CLIENT_ID =
@@ -35,7 +37,6 @@ let signoutButton = document.getElementById("signout_button");
  *  On load, called to load the auth2 library and API client library.
  */
 function handleClientLoad() {
-  console.log("index.js: start");
   gapi.load("client:auth2", initClient);
 }
 
@@ -75,7 +76,7 @@ function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
     authorizeButton.style.display = "none";
     signoutButton.style.display = "block";
-    my_presonal_init();
+    init();
   } else {
     authorizeButton.style.display = "block";
     signoutButton.style.display = "none";
@@ -97,19 +98,21 @@ function handleSignoutClick(event) {
 }
 
 function createHTMLArrowRight() {
-  let HTMLsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  HTMLsvg.setAttribute("width", "16px");
-  HTMLsvg.setAttribute("height", "16px");
-  HTMLsvg.setAttribute("viewBox", "0 0 24 24");
-  HTMLsvg.setAttribute("aria-hidden", "true");
+  let HTMLSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  HTMLSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  HTMLSvg.setAttribute("version", "1.1");
+  HTMLSvg.setAttribute("width", "16px");
+  HTMLSvg.setAttribute("height", "16px");
+  HTMLSvg.setAttribute("viewBox", "0 -5 25 30");
+  HTMLSvg.setAttribute("aria-hidden", "true");
 
-  let svgNS = HTMLsvg.namespaceURI;
+  let svgNS = HTMLSvg.namespaceURI;
 
   let path = document.createElementNS(svgNS, "path");
-  path.setAttribute("d", "m10 17 5-5-5-5v10z");
-  HTMLsvg.appendChild(path);
+  path.setAttribute("d", "m5 20 10 -10 -10 -10 z");
+  HTMLSvg.appendChild(path);
 
-  return HTMLsvg;
+  return HTMLSvg;
 }
 
 function setAttributes(HTMLElement, attributes) {
@@ -177,50 +180,44 @@ function sortNodesDirectoryFirst(node0, node1) {
 }
 
 function buildFilesListArg(args) {
-  const { pageSize, fields, q, folderId, pageToken, spaces } = args;
   const result = {};
-  if (pageSize) {
-    result.pageSize = pageSize;
+
+  const authorisedKeys = [
+    "pageSize",
+    "fields",
+    "q",
+    "folderId",
+    "pageToken",
+    "spaces",
+    "includeItemsFromAllDrives",
+    "includeTeamDriveItems",
+    "supportsAllDrives",
+    "supportsTeamDrives",
+    "orderBy",
+  ];
+
+  for (const key of Object.keys(args)) {
+    if (!authorisedKeys.includes(key)) {
+      continue;
+    }
+    if (key === "folderId") {
+      const folderId = args[key];
+      if (folderId) {
+        result.q = "'" + folderId + "' in parents and trashed = false";
+      }
+    } else {
+      result[key] = args[key];
+    }
   }
-  if (fields) {
-    result.fields = fields;
-  }
-  if (q) {
-    result.q = q;
-  } else if (folderId) {
-    result.q = "'" + folderId + "' in parents";
-  }
-  if (pageToken) {
-    result.pageToken = pageToken;
-  }
-  if (spaces) {
-    result.spaces = spaces;
-  }
+
   return result;
 }
 
-//   {
-//   pageSize: pageSize,
-//   // fields: "nextPageToken, files(id, name)",
-//   fields: fields,
-//   // q: "mimeType = 'application/vnd.google-apps.folder' and '' in parents",
-//   // q: "mimeType = 'application/vnd.google-apps.folder'",
-//   // q: "not properties has { key='parents' and value='' }",
-//   // q: "'1gDNJO-ItDm2In206Tc9o9S1EqdSn0_S4' in parents",
-//   q: "'" + directoryId + "' in parents",
-//   // q: "properties has { parents=undefined }",
-//   // q: "properties (parents) is undefined",
-//   // q: "not properties has (parents)",
-//   // q: "properties has {{ key='parents' and value='' }} or not properties has {{ key='parents' and value='' }}",
-//   // q: "properties has { key='parents' and value='undefined' }",
-//   // q: "not properties has { key='parents' and value='1fx8fwpgygF1HP_-nS_RVK99M0agdeR2Q' }",
-//   pageToken: nextPageToken,
-//   spaces: "drive",
-// }
 async function gFilesList(args) {
   return await gapi.client.drive.files.list(buildFilesListArg(args));
 }
 
+const enableNodesCache = true;
 /**
  * Maps a node id to an array of children nodes.
  */
@@ -228,38 +225,90 @@ let nodesCache = {};
 
 let rootNodeId;
 
-async function getNodesFromDirectory(pageSize, fields, folderId) {
-  if (nodesCache[folderId]) {
-    return nodesCache[folderId];
-  }
-
+async function loopRequest(listOptions) {
   const result = [];
   let nextPageToken;
   do {
     let response = await gFilesList({
-      pageSize,
-      fields,
-      folderId,
+      ...listOptions,
       pageToken: nextPageToken,
-      spaces: "drive",
     });
     nextPageToken = response.result.nextPageToken;
     if (response.result.files.length <= 0) {
       break;
     }
-    for (let i = 0; i < response.result.files.length; i++) {
-      result.push(response.result.files[i]);
+    for (const file of response.result.files) {
+      result.push(file);
     }
   } while (nextPageToken);
 
-  nodesCache[folderId] = [...result];
   return result;
 }
 
-async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
-  const nodes = await getNodesFromDirectory(pageSize, fields, folderId);
+async function getNodesFromDirectory(pageSize, fields, folderId) {
+  if (nodesCache[folderId]) {
+    return nodesCache[folderId];
+  }
+
+  const result = await loopRequest({
+    pageSize,
+    fields,
+    folderId,
+    spaces: "drive",
+  });
+
+  nodesCache[folderId] = [...result];
+
+  return result;
+}
+
+async function higherGetSortedNodes(
+  getSortedNodesFunction,
+  pageSize,
+  fields,
+  folderId
+) {
+  const nodes = await getSortedNodesFunction(pageSize, fields, folderId);
   nodes.sort(sortNodesDirectoryFirst);
   return nodes;
+}
+
+async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
+  return await higherGetSortedNodes(
+    getNodesFromDirectory,
+    pageSize,
+    fields,
+    folderId
+  );
+}
+
+async function getSharedNodes(pageSize, fields) {
+  return await loopRequest({
+    pageSize,
+    fields,
+    includeItemsFromAllDrives: true,
+    supportsAllDrives: true,
+    q: "sharedWithMe = true",
+    spaces: "drive",
+  });
+}
+
+async function getSortedSharedNodes(pageSize, fields) {
+  return await higherGetSortedNodes(getSharedNodes, pageSize, fields);
+}
+
+async function getEveryNodes(pageSize, fields) {
+  return await loopRequest({
+    pageSize,
+    fields,
+    includeItemsFromAllDrives: true,
+    supportsAllDrives: true,
+    spaces: "drive",
+  });
+}
+
+async function getSortedEveryNodes(pageSize, fields) {
+  return await higherGetSortedNodes(getEveryNodes, pageSize, fields);
 }
 
 async function toggleFolderExpansion(folderId) {
@@ -278,8 +327,6 @@ async function toggleFolderExpansion(folderId) {
     HTMLArrow.style.transform = "rotate(0deg)";
   }
 }
-
-// function handleClick() {}
 
 function mod(n, m) {
   return ((n % m) + m) % m;
@@ -502,12 +549,12 @@ function createTextHTMLSpan(node) {
   // TODO: handle tab
   // TODO: handle shift + tab
   HTMLSpan.addEventListener("keydown", (event) => {
-    console.log("Text keydown");
+    // console.log("Text keydown");
     event.cancelBubble = true;
 
+    const textHTMLSpan = event.target;
     if (event.code === "Escape") {
       // console.log("Escape edition: discard changes");
-      const textHTMLSpan = event.target;
       toggleContentEditable(textHTMLSpan);
       let selection = window.getSelection();
       selection.removeAllRanges();
@@ -515,9 +562,59 @@ function createTextHTMLSpan(node) {
       originalTextContent = undefined;
       textHTMLSpan.parentNode.focus();
     }
+    if (event.code === "Tab") {
+      // console.log("Tab event");
+      toggleContentEditable(textHTMLSpan);
+      let selection = window.getSelection();
+      selection.removeAllRanges();
+      textHTMLSpan.innerText = originalTextContent;
+      originalTextContent = undefined;
+    }
     if (event.code === "Enter") {
-      console.log("Enter edition: validate changes");
-      // TODO: send a request to google drive to update the file name
+      // console.log("Enter edition: validate changes");
+      toggleContentEditable(textHTMLSpan);
+      let selection = window.getSelection();
+      selection.removeAllRanges();
+      const newTextContent = escape(textHTMLSpan.innerText);
+      // console.log("node.id", node.id);
+      // console.log("newTextContent", newTextContent);
+
+      // Sanity checks
+      if (newTextContent === originalTextContent) {
+        originalTextContent = undefined;
+        textHTMLSpan.parentNode.focus();
+        return;
+      }
+
+      if (newTextContent.length !== textHTMLSpan.innerText.length) {
+        console.error("Escapable character present in new name");
+        console.error("newTextContent", newTextContent);
+        console.error("textHTMLSpan.innerText", textHTMLSpan.innerText);
+        textHTMLSpan.innerText = originalTextContent;
+        originalTextContent = undefined;
+        textHTMLSpan.parentNode.focus();
+        return;
+      }
+
+      gapi.client.drive.files
+        .update({
+          fileId: node.id,
+          name: newTextContent,
+        })
+        .then((resp) => {
+          // console.log("resp", resp);
+          textHTMLSpan.innerText = newTextContent;
+          originalTextContent = undefined;
+          textHTMLSpan.parentNode.focus();
+        })
+        .catch((error) => {
+          console.error("error", error);
+          textHTMLSpan.innerText = originalTextContent;
+          originalTextContent = undefined;
+          textHTMLSpan.parentNode.focus();
+        });
+
+      // return;
     }
   });
 
@@ -528,7 +625,12 @@ function createTextHTMLSpan(node) {
 // Handle contextual menu (right click)
 function createHTMLFolderNode(folder) {
   const toAppend = [];
-  toAppend.push(createHTMLArrowRight());
+
+  const HTMLSvg = createHTMLArrowRight();
+  HTMLSvg.addEventListener("click", (event) => {
+    toggleFolderExpansion(folder.id);
+  });
+  toAppend.push(HTMLSvg);
 
   toAppend.push(createHTMLImage(folder.iconLink));
 
@@ -595,6 +697,7 @@ function createHTMLFileNode(file) {
   appendTo(HTMLParentSpan, toAppend);
 
   HTMLParentSpan.addEventListener("click", (event) => {
+    console.log(file);
     document.getElementById(file.id).firstChild.focus();
   });
 
@@ -626,14 +729,17 @@ function createHTMLNodes(nodes, indentation = false) {
       ? {
           style: "margin-left: 16px;",
         }
-      : undefined
+      : {
+          style:
+            "margin-top: 10px; margin-bottom: 10px; margin-left: 10px; display: inline-block;",
+        }
   );
 
   if (nodes.length === 0) {
     const HTMLSpan = createHTMLSpan({
       style: "color: #555; font-style: italic;",
     });
-    HTMLSpan.appendChild(createHTMLText("Empty"));
+    HTMLSpan.appendChild(createHTMLText("(Empty)"));
     HTMLDiv.appendChild(HTMLSpan);
   }
   for (let i = 0; i < nodes.length; i++) {
@@ -641,10 +747,12 @@ function createHTMLNodes(nodes, indentation = false) {
 
     if (isFolder(node)) {
       HTMLDiv.appendChild(createHTMLFolderNode(node));
-      if (!nodesCache[node.id]) {
-        setTimeout(() => {
-          getNodesFromDirectory(999, "*", node.id);
-        }, 0);
+      if (enableNodesCache) {
+        if (!nodesCache[node.id]) {
+          setTimeout(() => {
+            getNodesFromDirectory(999, "*", node.id);
+          }, 0);
+        }
       }
     } else {
       HTMLDiv.appendChild(createHTMLFileNode(node));
@@ -653,24 +761,54 @@ function createHTMLNodes(nodes, indentation = false) {
   return HTMLDiv;
 }
 
-/**
- * Print files in root directory.
- */
-async function my_presonal_init() {
+async function initNodesFromRoot() {
   const nodes = await getSortedNodesFromDirectory(999, "*", "root");
   if (0 < nodes.length) {
     rootNodeId = nodes[0].parents[0];
   }
+  return nodes;
+}
+
+async function initSharedNodes() {
+  return await getSortedSharedNodes(999, "*");
+}
+
+async function initEveryNodes() {
+  return await getSortedEveryNodes(999, "*");
+}
+
+const initSwitch = "root";
+// const initSwitch = "shared";
+// const initSwitch = "every";
+
+/**
+ * Print files in root directory.
+ */
+async function init() {
+  let nodes = [];
+  switch (initSwitch) {
+    case "root":
+      nodes = await initNodesFromRoot();
+      break;
+    case "shared":
+      nodes = await initSharedNodes();
+      break;
+    case "every":
+      nodes = await initEveryNodes();
+      break;
+    default:
+      console.error(`initSwich "${initSwich}" is not handled.`);
+  }
+
   const HTMLDiv = createHTMLNodes(nodes, false);
 
-  setAttributes(HTMLDiv, {
-    style:
-      "box-shadow: 0px 6px 6px -3px rgb(0 0 0 / 20%), 0px 10px 14px 1px rgb(0 0 0 / 14%), 0px 4px 18px 3px rgb(0 0 0 / 12%); margin-top: 0.5em;",
-  });
+  setAttributes(HTMLDiv, {});
   appendToContent([HTMLDiv]);
 
-  const tabbableResult = tabbable(HTMLDiv);
-  tabbableResult[0].focus();
+  if (0 < nodes.length) {
+    const tabbableResult = tabbable(HTMLDiv);
+    tabbableResult[0].focus();
+  }
 }
 
 /**
