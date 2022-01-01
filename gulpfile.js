@@ -34,37 +34,21 @@ function styles() {
 }
 
 function scripts() {
-  // return src("app/scripts/**/*.js", {
-  //   sourcemaps: !isProd,
-  // })
-  //   .pipe($.plumber())
-  //   .pipe($.babel())
-  //   .pipe(
-  //     dest(".tmp/scripts", {
-  //       sourcemaps: !isProd ? "." : false,
-  //     })
-  //   )
-  //   .pipe(server.reload({ stream: true }));
-
   const b = browserify({
     entries: "app/scripts/main.js",
     transform: babelify,
     debug: true,
   });
 
-  return (
-    b
-      .bundle()
-      .pipe(source("bundle.js"))
-      .pipe($.plumber())
-      .pipe(buffer())
-      // .pipe($.if(!isProd, $.sourcemaps.init({ loadMaps: true })))
-      // .pipe($.if(!isProd, $.sourcemaps.write(".")))
-      .pipe(dest(".tmp/scripts"), {
-        sourcemaps: !isProd ? "." : false,
-      })
-      .pipe(server.reload({ stream: true }))
-  );
+  return b
+    .bundle()
+    .pipe(source("bundle.js"))
+    .pipe($.plumber())
+    .pipe(buffer())
+    .pipe(dest(".tmp/scripts"), {
+      sourcemaps: !isProd ? "." : false,
+    })
+    .pipe(server.reload({ stream: true }));
 }
 
 const lintBase = (files, options) => {

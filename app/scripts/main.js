@@ -62,7 +62,6 @@ function initClient() {
         signoutButton.onclick = handleSignoutClick;
       },
       function (error) {
-        // appendPreText(JSON.stringify(error, null, 2));
         appendToContent([createHTMLText(JSON.stringify(error, null, 2))]);
       }
     );
