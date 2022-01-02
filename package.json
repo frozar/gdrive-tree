@@ -54,9 +54,6 @@
       "node": true,
       "browser": true
     },
-    "ignorePatterns": [
-      "app/scripts/tree.js"
-    ],
     "rules": {}
   },
   "dependencies": {
