@@ -89,33 +89,33 @@ function html() {
         })
       )
     )
-    .pipe(dest("dist"));
+    .pipe(dest("public"));
 }
 
 function images() {
   return src("app/images/**/*", { since: lastRun(images) })
     .pipe($.imagemin())
-    .pipe(dest("dist/images"));
+    .pipe(dest("public/images"));
 }
 
 function fonts() {
   return src("app/fonts/**/*.{eot,svg,ttf,woff,woff2}").pipe(
-    $.if(!isProd, dest(".tmp/fonts"), dest("dist/fonts"))
+    $.if(!isProd, dest(".tmp/fonts"), dest("public/fonts"))
   );
 }
 
 function extras() {
   return src(["app/*", "!app/*.html"], {
     dot: true,
-  }).pipe(dest("dist"));
+  }).pipe(dest("public"));
 }
 
 function clean() {
-  return del([".tmp", "dist"]);
+  return del([".tmp", "public"]);
 }
 
 function measureSize() {
-  return src("dist/**/*").pipe($.size({ title: "build", gzip: true }));
+  return src("public/**/*").pipe($.size({ title: "build", gzip: true }));
 }
 
 const build = series(
@@ -171,12 +171,12 @@ function startTestServer() {
   watch("test/spec/**/*.js", lintTest);
 }
 
-function startDistServer() {
+function startPublicServer() {
   server.init({
     notify: false,
     port,
     server: {
-      baseDir: "dist",
+      baseDir: "public",
       routes: {
         "/node_modules": "node_modules",
       },
@@ -190,7 +190,7 @@ if (isDev) {
 } else if (isTest) {
   serve = series(clean, scripts, startTestServer);
 } else if (isProd) {
-  serve = series(build, startDistServer);
+  serve = series(build, startPublicServer);
 }
 
 exports.serve = serve;
