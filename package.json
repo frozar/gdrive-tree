@@ -45,10 +45,6 @@
     "Firefox ESR"
   ],
   "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 6,
-      "sourceType": "module"
-    },
     "env": {
       "es6": true,
       "node": true,
