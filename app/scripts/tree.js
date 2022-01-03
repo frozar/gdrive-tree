@@ -54,7 +54,7 @@ function createHTMLImage(src) {
   return HTMLimg;
 }
 
-function createHTMLText(message) {
+export function createHTMLText(message) {
   let HTMLtext = document.createTextNode(message);
   return HTMLtext;
 }
@@ -84,7 +84,7 @@ function clearContent() {
   }
 }
 
-function appendToContent(HTMLnodes) {
+export function appendToContent(HTMLnodes) {
   let contentDiv = document.getElementById("content");
   appendTo(contentDiv, HTMLnodes);
 }

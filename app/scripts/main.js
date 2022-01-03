@@ -1,7 +1,7 @@
 import regeneratorRuntime from "regenerator-runtime";
 
 import router from "./router";
-import show from "./tree";
+import show, { appendToContent, createHTMLText } from "./tree";
 import "./button_toggle_all";
 
 // Client ID and API key from the Developer Console
