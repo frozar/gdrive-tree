@@ -32,6 +32,8 @@ let SCOPES = [
 
 let authorizeButton = document.getElementById("authorize_button");
 let signoutButton = document.getElementById("signout_button");
+let contentDiv = document.getElementById("content");
+let navLinks = document.getElementById("nav_links");
 
 /**
  *  On load, called to load the auth2 library and API client library.
@@ -75,11 +77,15 @@ function initClient() {
 function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
     authorizeButton.style.display = "none";
-    signoutButton.style.display = "block";
+    signoutButton.style.display = "inline";
+    contentDiv.style.display = "block";
+    navLinks.style.display = "inline";
     show("drive");
   } else {
-    authorizeButton.style.display = "block";
+    authorizeButton.style.display = "inline";
     signoutButton.style.display = "none";
+    contentDiv.style.display = "none";
+    navLinks.style.display = "none";
   }
 }
 
