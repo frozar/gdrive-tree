@@ -65,6 +65,18 @@ function appendTo(destinationNode, HTMLnodes) {
   }
 }
 
+function clearState() {
+  clearContent();
+  clearObject(folderIdDict);
+  clearObject(nodesCache);
+}
+
+function clearObject(obj) {
+  for (const key in obj) {
+    delete obj[key];
+  }
+}
+
 function clearContent() {
   let contentDiv = document.getElementById("content");
   while (contentDiv.firstChild) {
@@ -133,9 +145,19 @@ const enableNodesCache = true;
 /**
  * Maps a node id to an array of children nodes.
  */
-let nodesCache = {};
+const nodesCache = {};
 
 let rootNodeId;
+
+const folderIdDict = {};
+
+export function getFolderIds() {
+  return Object.keys(folderIdDict);
+}
+
+function addFolderId(folderId) {
+  folderIdDict[folderId] = true;
+}
 
 async function loopRequest(listOptions) {
   const result = [];
@@ -168,6 +190,15 @@ async function higherGetSortedNodes(
   return nodes;
 }
 
+function retrieveFolderIds(nodes) {
+  nodes.forEach((node) => {
+    // console.log("node", node);
+    if (isFolder(node)) {
+      addFolderId(node.id);
+    }
+  });
+}
+
 async function getNodesFromDirectory(pageSize, fields, folderId) {
   if (nodesCache[folderId]) {
     return nodesCache[folderId];
@@ -181,6 +212,8 @@ async function getNodesFromDirectory(pageSize, fields, folderId) {
     folderId,
     spaces: "drive",
   });
+
+  retrieveFolderIds(result);
 
   nodesCache[folderId] = [...result];
 
@@ -197,7 +230,7 @@ async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
 }
 
 async function getSharedNodes(pageSize, fields) {
-  return await loopRequest({
+  const result = await loopRequest({
     pageSize,
     fields,
     includeItemsFromAllDrives: true,
@@ -205,6 +238,8 @@ async function getSharedNodes(pageSize, fields) {
     q: "sharedWithMe = true",
     spaces: "drive",
   });
+
+  return result;
 }
 
 async function getSortedSharedNodes(pageSize, fields) {
@@ -212,28 +247,36 @@ async function getSortedSharedNodes(pageSize, fields) {
 }
 
 async function getEveryNodes(pageSize, fields) {
-  return await loopRequest({
+  const result = await loopRequest({
     pageSize,
     fields,
     includeItemsFromAllDrives: true,
     supportsAllDrives: true,
     spaces: "drive",
   });
+
+  // result.forEach((node) => {
+  //   // console.log("node", node);
+  //   if (isFolder(node)) {
+  //     addFolderId(node.id);
+  //   }
+  // });
+  return result;
 }
 
 async function getSortedEveryNodes(pageSize, fields) {
   return await higherGetSortedNodes(getEveryNodes, pageSize, fields);
 }
 
-async function toggleFolderExpansion(folderId) {
+export async function toggleFolderExpansion(folderId) {
   const parentDiv = document.getElementById(folderId);
-  if (parentDiv.childElementCount === 1) {
+  if (!isFolderExpanded(folderId)) {
     const nodes = await getSortedNodesFromDirectory(999, "*", folderId);
     parentDiv.append(createHTMLNodes(nodes, true));
 
     const HTMLArrow = parentDiv.firstChild.firstChild;
     HTMLArrow.style.transform = "rotate(90deg)";
-  } else if (parentDiv.childElementCount === 2) {
+  } else {
     const HTMLFolderContent = parentDiv.lastElementChild;
     parentDiv.removeChild(HTMLFolderContent);
 
@@ -301,8 +344,8 @@ function focusPreviousElementCircular(eventTarget) {
   return tabbableResult[previousFocusIndex];
 }
 
-function isFolderExpanded(folder) {
-  return 1 < document.getElementById(folder.id).childElementCount;
+export function isFolderExpanded(folderId) {
+  return 1 < document.getElementById(folderId).childElementCount;
 }
 
 function focusParentFolder(node) {
@@ -324,38 +367,12 @@ function toggleContentEditable(textHTMLSpan) {
 // TODO: handle "Delete"
 async function handleKeyDown(event, node) {
   if (event.code === "F2") {
-    // console.log("target", event.target);
-    // console.log("last elt", event.target.lastElementChild);
-    // console.dir(event.target.lastElementChild);
-    // console.log("last elt", event.target.firstChild.lastElementChild);
-    // textHTMLSpan;
-    // if (isFolder(node)) {
-    // }
     const textHTMLSpan = event.target.lastElementChild;
-    // console.dir(event.target);
-    // const isContentEditable = textHTMLSpan.getAttribute("contenteditable");
-    // // console.log("isContentEditable", isContentEditable);
-    // // console.log("typeof isContentEditable", typeof isContentEditable);
-    // const isContentEditableBool = isContentEditable === "true";
-    // // console.log("isContentEditableBool", isContentEditableBool);
-    // // console.log("!isContentEditableBool", !isContentEditableBool);
-    // textHTMLSpan.setAttribute("contenteditable", !isContentEditableBool);
     toggleContentEditable(textHTMLSpan);
     textHTMLSpan.focus();
-    // console.log("textHTMLSpan.innerHTML", textHTMLSpan.innerHTML);
     const textContent = textHTMLSpan.innerHTML;
-    // Select everything except extension
     const indexPt = textContent.lastIndexOf(".");
-    // console.log("textHTMLSpan", textHTMLSpan);
-    // console.log("typeof textHTMLSpan", typeof textHTMLSpan);
-    // console.dir(textHTMLSpan);
-    // console.log("textHTMLSpan.firstChild", textHTMLSpan.firstChild);
-    // console.log(
-    //   "typeof textHTMLSpan.firstChild",
-    //   typeof textHTMLSpan.firstChild
-    // );
     const textHTMLNode = textHTMLSpan.firstChild;
-    // console.dir(textHTMLSpan.firstChild);
     if (indexPt !== -1) {
       let selection = window.getSelection();
       let range = document.createRange();
@@ -364,7 +381,6 @@ async function handleKeyDown(event, node) {
       selection.removeAllRanges();
       selection.addRange(range);
     } else {
-      // textHTMLSpan.setSelectionRange(0, textContent.length);
       let selection = window.getSelection();
       let range = document.createRange();
       range.selectNodeContents(textHTMLNode);
@@ -376,7 +392,7 @@ async function handleKeyDown(event, node) {
   if (event.code === "ArrowRight") {
     event.preventDefault();
     if (isFolder(node)) {
-      if (!isFolderExpanded(node)) {
+      if (!isFolderExpanded(node.id)) {
         await toggleFolderExpansion(node.id);
       }
       const nodes = await getNodesFromDirectory(999, "*", node.id);
@@ -390,7 +406,7 @@ async function handleKeyDown(event, node) {
   if (event.code === "ArrowLeft") {
     event.preventDefault();
     if (isFolder(node)) {
-      if (isFolderExpanded(node)) {
+      if (isFolderExpanded(node.id)) {
         await toggleFolderExpansion(node.id);
       } else {
         focusParentFolder(node);
@@ -660,16 +676,18 @@ function createHTMLNodes(nodes, indentation = false) {
     let node = nodes[i];
 
     if (isFolder(node)) {
-      HTMLDiv.appendChild(createHTMLFolderNode(node));
+      const folder = node;
+      HTMLDiv.appendChild(createHTMLFolderNode(folder));
       if (enableNodesCache) {
-        if (!nodesCache[node.id]) {
+        if (!nodesCache[folder.id]) {
           setTimeout(() => {
-            getNodesFromDirectory(999, "*", node.id);
+            getNodesFromDirectory(999, "*", folder.id);
           }, 0);
         }
       }
     } else {
-      HTMLDiv.appendChild(createHTMLFileNode(node));
+      const file = node;
+      HTMLDiv.appendChild(createHTMLFileNode(file));
     }
   }
   return HTMLDiv;
@@ -695,6 +713,8 @@ async function initEveryNodes() {
  * Print files in root directory.
  */
 export default async function show(initSwitch) {
+  clearState();
+
   let nodes = [];
   switch (initSwitch) {
     case "drive":
@@ -710,10 +730,19 @@ export default async function show(initSwitch) {
       console.error(`initSwitch "${initSwitch}" is not handled.`);
   }
 
+  retrieveFolderIds(nodes);
+
   const HTMLDiv = createHTMLNodes(nodes, false);
 
   setAttributes(HTMLDiv, {});
-  clearContent();
+  // clearContent();
+  // for (const key in folderIdDict) {
+  //   delete folderIdDict[key];
+  // }
+  // for (const key in nodesCache) {
+  //   delete nodesCache[key];
+  // }
+
   appendToContent([HTMLDiv]);
 
   if (0 < nodes.length) {
