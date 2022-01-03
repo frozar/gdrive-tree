@@ -19,13 +19,31 @@
         your experience.
       </p>
     <![endif]-->
-    <button id="authorize_button" style="display: none">Authorize</button>
-    <button id="signout_button" style="display: none">Sign Out</button>
-    <nav>
-      <a href="/drive" data-link>My Drive</a> |
-      <a href="/share" data-link>Share with me</a>
-    </nav>
-    <div id="content"></div>
+
+    <header>
+      <nav
+        id="nav_bar"
+        style="
+          margin-top: 10px;
+          margin-left: 6px;
+          margin-right: 6px;
+          display: flex;
+          justify-content: space-between;
+        "
+      >
+        <div id="nav_links" style="display: none">
+          <a href="/drive" data-link>My Drive</a> |
+          <a href="/share" data-link>Share with me</a>
+          <span style="display: inline-block; width: 30px"></span>
+          <button id="toggle_all">Toggle expansion everything</button>
+        </div>
+        <div style="display: inline">
+          <button id="authorize_button" style="display: none">Authorize</button>
+          <button id="signout_button" style="display: none">Sign Out</button>
+        </div>
+      </nav>
+    </header>
+    <div id="content" style="display: none"></div>
 
     <script
       async
