@@ -7,6 +7,9 @@ bower_components
 /public
 /.tmp
 
+# VS Code
+.vscode
+
 # System Files
 .DS_Store
 Thumbs.db

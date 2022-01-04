@@ -3,6 +3,7 @@ import regeneratorRuntime from "regenerator-runtime";
 import router from "./router";
 import show, { appendToContent, createHTMLText } from "./tree";
 import "./button_toggle_all";
+import "./selection";
 
 // Client ID and API key from the Developer Console
 let CLIENT_ID =
@@ -32,7 +33,7 @@ let SCOPES = [
 
 let authorizeButton = document.getElementById("authorize_button");
 let signoutButton = document.getElementById("signout_button");
-let contentDiv = document.getElementById("content");
+let containerDiv = document.getElementById("container");
 let navLinks = document.getElementById("nav_links");
 
 /**
@@ -78,13 +79,13 @@ function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
     authorizeButton.style.display = "none";
     signoutButton.style.display = "inline";
-    contentDiv.style.display = "block";
+    containerDiv.style.display = "block";
     navLinks.style.display = "inline";
     show("drive");
   } else {
     authorizeButton.style.display = "inline";
     signoutButton.style.display = "none";
-    contentDiv.style.display = "none";
+    containerDiv.style.display = "none";
     navLinks.style.display = "none";
   }
 }
