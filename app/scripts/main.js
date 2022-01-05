@@ -3,10 +3,12 @@ import regeneratorRuntime from "regenerator-runtime";
 import router from "./router";
 import show, { appendToContent, createHTMLText } from "./tree";
 import "./button_toggle_all";
+import "./selection";
 
 // Client ID and API key from the Developer Console
 let CLIENT_ID =
-  "368874607594-9802hk2te62qs9dh0pfv28n872v8fo4d.apps.googleusercontent.com";
+  // "368874607594-9802hk2te62qs9dh0pfv28n872v8fo4d.apps.googleusercontent.com";
+  "368874607594-nvsbjbq932pdvgcegs4qsuhh46ni7jo7.apps.googleusercontent.com";
 let API_KEY = "AIzaSyBZlbqrkQQ18akLJQ5cZV4ITpT5Om5QMGg";
 
 // Array of API discovery doc URLs for APIs used by the quickstart
@@ -32,7 +34,7 @@ let SCOPES = [
 
 let authorizeButton = document.getElementById("authorize_button");
 let signoutButton = document.getElementById("signout_button");
-let contentDiv = document.getElementById("content");
+let containerDiv = document.getElementById("container");
 let navLinks = document.getElementById("nav_links");
 
 /**
@@ -78,13 +80,13 @@ function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
     authorizeButton.style.display = "none";
     signoutButton.style.display = "inline";
-    contentDiv.style.display = "block";
+    containerDiv.style.display = "block";
     navLinks.style.display = "inline";
     show("drive");
   } else {
     authorizeButton.style.display = "inline";
     signoutButton.style.display = "none";
-    contentDiv.style.display = "none";
+    containerDiv.style.display = "none";
     navLinks.style.display = "none";
   }
 }

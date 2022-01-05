@@ -1,6 +1,12 @@
 import regeneratorRuntime from "regenerator-runtime";
 import { tabbable } from "tabbable";
 import { escape } from "html-escaper";
+import {
+  // selection,
+  selectionDone,
+  resetSelectionDone,
+  clearSelection,
+} from "./selection";
 
 function createHTMLArrowRight() {
   let HTMLSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -42,12 +48,6 @@ function createHTMLDiv(attributes) {
   return HTMLDiv;
 }
 
-function createHTMLIndentationUnit() {
-  let HTMLspan = document.createElement("span");
-  HTMLspan.setAttribute("style", "display: inline-block; width: 16px;");
-  return HTMLspan;
-}
-
 function createHTMLImage(src) {
   let HTMLimg = document.createElement("img");
   HTMLimg.src = src;
@@ -78,14 +78,14 @@ function clearObject(obj) {
 }
 
 function clearContent() {
-  let contentDiv = document.getElementById("content");
+  let contentDiv = document.getElementById("container");
   while (contentDiv.firstChild) {
     contentDiv.firstChild.remove();
   }
 }
 
 export function appendToContent(HTMLnodes) {
-  let contentDiv = document.getElementById("content");
+  let contentDiv = document.getElementById("container");
   appendTo(contentDiv, HTMLnodes);
 }
 
@@ -290,21 +290,21 @@ function mod(n, m) {
 }
 
 function focusHomeElement() {
-  const rootNode = document.getElementById("content");
+  const rootNode = document.getElementById("container");
   const tabbableResult = tabbable(rootNode);
   tabbableResult[0].focus();
   return tabbableResult[0];
 }
 
 function focusEndElement() {
-  const rootNode = document.getElementById("content");
+  const rootNode = document.getElementById("container");
   const tabbableResult = tabbable(rootNode);
   tabbableResult[tabbableResult.length - 1].focus();
   return tabbableResult[tabbableResult.length - 1];
 }
 
 function focusNextElement(eventTarget) {
-  const rootNode = document.getElementById("content");
+  const rootNode = document.getElementById("container");
   const tabbableResult = tabbable(rootNode);
   const nextFocusIndex = Math.min(
     tabbableResult.indexOf(eventTarget) + 1,
@@ -315,7 +315,7 @@ function focusNextElement(eventTarget) {
 }
 
 function focusPreviousElement(eventTarget) {
-  const rootNode = document.getElementById("content");
+  const rootNode = document.getElementById("container");
   const tabbableResult = tabbable(rootNode);
   const nextFocusIndex = Math.max(tabbableResult.indexOf(eventTarget) - 1, 0);
   tabbableResult[nextFocusIndex].focus();
@@ -323,7 +323,7 @@ function focusPreviousElement(eventTarget) {
 }
 
 function focusNextElementCircular(eventTarget) {
-  const rootNode = document.getElementById("content");
+  const rootNode = document.getElementById("container");
   const tabbableResult = tabbable(rootNode);
   const nextFocusIndex = mod(
     tabbableResult.indexOf(eventTarget) + 1,
@@ -334,7 +334,7 @@ function focusNextElementCircular(eventTarget) {
 }
 
 function focusPreviousElementCircular(eventTarget) {
-  const rootNode = document.getElementById("content");
+  const rootNode = document.getElementById("container");
   const tabbableResult = tabbable(rootNode);
   const previousFocusIndex = mod(
     tabbableResult.indexOf(eventTarget) - 1,
@@ -352,7 +352,7 @@ function focusParentFolder(node) {
   if (node.parents && node.parents[0]) {
     if (node.parents[0] !== rootNodeId) {
       const parentElement = document.getElementById(node.parents[0]);
-      parentElement.firstChild.focus();
+      parentElement.firstChild.children[1].focus();
     }
   }
 }
@@ -363,10 +363,10 @@ function toggleContentEditable(textHTMLSpan) {
   textHTMLSpan.setAttribute("contenteditable", !isContentEditableBool);
 }
 
-// TODO: handle "F2"
 // TODO: handle "Delete"
 async function handleKeyDown(event, node) {
   if (event.code === "F2") {
+    clearSelection();
     const textHTMLSpan = event.target.lastElementChild;
     toggleContentEditable(textHTMLSpan);
     textHTMLSpan.focus();
@@ -415,10 +415,14 @@ async function handleKeyDown(event, node) {
       focusParentFolder(node);
     }
   }
+  // TODO: manage CTRL
+  // TODO: manage SHIFT
   if (event.code === "ArrowUp") {
     event.preventDefault();
     focusPreviousElementCircular(event.target);
   }
+  // TODO: manage CTRL
+  // TODO: manage SHIFT
   if (event.code === "ArrowDown") {
     event.preventDefault();
     focusNextElementCircular(event.target);
@@ -445,11 +449,13 @@ async function handleKeyDown(event, node) {
     event.preventDefault();
     focusEndElement();
   }
+  // TODO: manage CTRL
+  // TODO: manage SHIFT
   if (event.code === "Space") {
     event.preventDefault();
-    if (isFolder(node)) {
-      toggleFolderExpansion(node.id);
-    }
+    // if (isFolder(node)) {
+    //   toggleFolderExpansion(node.id);
+    // }
   }
   if (event.code === "Enter") {
     event.preventDefault();
@@ -558,19 +564,21 @@ function createHTMLFolderNode(folder) {
 
   const HTMLSvg = createHTMLArrowRight();
   HTMLSvg.addEventListener("click", (event) => {
+    event.cancelBubble = true;
     toggleFolderExpansion(folder.id);
   });
   toAppend.push(HTMLSvg);
 
-  toAppend.push(createHTMLImage(folder.iconLink));
+  const HTMLSpanLabel = createTextHTMLSpan(folder);
 
-  const HTMLSpan = createTextHTMLSpan(folder);
-  toAppend.push(HTMLSpan);
-
-  const HTMLParentSpan = createHTMLSpan({
-    style: "cursor: pointer; display: inline-flex; align-items: center;",
+  const HTMLContentSpan = createHTMLSpan({
+    class: "selectable",
     tabindex: 0,
   });
+  appendTo(HTMLContentSpan, [createHTMLImage(folder.iconLink), HTMLSpanLabel]);
+  toAppend.push(HTMLContentSpan);
+
+  const HTMLParentSpan = createHTMLSpan({ class: "folder_surrounding_span" });
   appendTo(HTMLParentSpan, toAppend);
 
   HTMLParentSpan.addEventListener("click", (event) => {
@@ -606,50 +614,41 @@ function openFile(file) {
 }
 
 function createHTMLFileNode(file) {
-  const toAppend = [];
-  toAppend.push(createHTMLIndentationUnit());
-
   const HTMLSpanContent = createHTMLSpan({
-    style: "cursor: pointer; display: inline-flex; align-items: center",
+    class: "selectable file",
     tabindex: "0",
   });
 
-  const toAppend2 = [];
-  toAppend2.push(createHTMLImage(file.iconLink));
+  const toAppend = [];
+  toAppend.push(createHTMLImage(file.iconLink));
   const HTMLSpan = createTextHTMLSpan(file);
-  toAppend2.push(HTMLSpan);
-  appendTo(HTMLSpanContent, toAppend2);
+  toAppend.push(HTMLSpan);
+  appendTo(HTMLSpanContent, toAppend);
 
-  toAppend.push(HTMLSpanContent);
-
-  const HTMLParentSpan = createHTMLSpan();
-
-  appendTo(HTMLParentSpan, toAppend);
-
-  HTMLParentSpan.addEventListener("click", (event) => {
-    console.log(file);
+  HTMLSpanContent.addEventListener("click", (event) => {
+    // console.log(file);
     document.getElementById(file.id).firstChild.focus();
   });
 
-  HTMLParentSpan.addEventListener("dblclick", (event) => {
+  HTMLSpanContent.addEventListener("dblclick", (event) => {
     openFile(file);
   });
 
   // To prevent text selection on double click
-  HTMLParentSpan.addEventListener("mousedown", function (event) {
+  HTMLSpanContent.addEventListener("mousedown", function (event) {
     if (event.detail > 1) {
       event.preventDefault();
     }
   });
 
-  HTMLParentSpan.addEventListener("keydown", (event) => {
+  HTMLSpanContent.addEventListener("keydown", (event) => {
     handleKeyDown(event, file);
   });
 
   const HTMLDiv = createHTMLDiv();
   HTMLDiv.setAttribute("id", file.id);
 
-  appendTo(HTMLDiv, [HTMLParentSpan]);
+  appendTo(HTMLDiv, [HTMLSpanContent]);
   return HTMLDiv;
 }
 
@@ -734,14 +733,22 @@ export default async function show(initSwitch) {
 
   const HTMLDiv = createHTMLNodes(nodes, false);
 
-  setAttributes(HTMLDiv, {});
-  // clearContent();
-  // for (const key in folderIdDict) {
-  //   delete folderIdDict[key];
-  // }
-  // for (const key in nodesCache) {
-  //   delete nodesCache[key];
-  // }
+  HTMLDiv.addEventListener("click", () => {
+    // console.log("click on big div", selectionDone);
+    // console.log("selectionDone", selectionDone);
+    if (!selectionDone) {
+      // console.log("selection", selection);
+      // selection.clearSelection();
+      // for (const node of document.querySelectorAll(".selected")) {
+      //   node.classList.remove("selected");
+      // }
+      clearSelection();
+    }
+    // selectionDone = false;
+    resetSelectionDone();
+  });
+
+  setAttributes(HTMLDiv, { style: "width: -webkit-fill-available;" });
 
   appendToContent([HTMLDiv]);
 
