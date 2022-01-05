@@ -7,7 +7,8 @@ import "./selection";
 
 // Client ID and API key from the Developer Console
 let CLIENT_ID =
-  "368874607594-9802hk2te62qs9dh0pfv28n872v8fo4d.apps.googleusercontent.com";
+  // "368874607594-9802hk2te62qs9dh0pfv28n872v8fo4d.apps.googleusercontent.com";
+  "368874607594-nvsbjbq932pdvgcegs4qsuhh46ni7jo7.apps.googleusercontent.com";
 let API_KEY = "AIzaSyBZlbqrkQQ18akLJQ5cZV4ITpT5Om5QMGg";
 
 // Array of API discovery doc URLs for APIs used by the quickstart
