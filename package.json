@@ -57,7 +57,6 @@
     "rules": {}
   },
   "dependencies": {
-    "@viselect/vanilla": "^3.0.0-beta.13",
     "html-escaper": "^3.0.3",
     "regenerator-runtime": "^0.13.9",
     "tabbable": "^5.2.1"
