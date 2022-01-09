@@ -36,6 +36,10 @@ function hasAncestorWithTag(node, givenTagName) {
   }
 }
 
+export function nodeIsSelected(node) {
+  return node.classList.contains("selected");
+}
+
 export const selection = new SelectionArea({
   // Class for the selection-area itself (the element).
   selectionAreaClass: "selection-area",

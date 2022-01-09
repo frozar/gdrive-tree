@@ -2,10 +2,11 @@ import regeneratorRuntime from "regenerator-runtime";
 import { tabbable } from "tabbable";
 import { escape } from "html-escaper";
 import {
-  // selection,
+  selection,
   selectionDone,
   resetSelectionDone,
   clearSelection,
+  nodeIsSelected,
 } from "./selection";
 
 function createHTMLArrowRight() {
@@ -453,6 +454,32 @@ async function handleKeyDown(event, node) {
   // TODO: manage SHIFT
   if (event.code === "Space") {
     event.preventDefault();
+    console.log("BEGIN selection", selection);
+    // console.log("node.id", node.id);
+    // console.log(
+    //   "document.getElementById(node.id)",
+    //   document.getElementById(node.id)
+    // );
+    const tabbableResult = tabbable(document.getElementById(node.id));
+    // console.log("tabbableResult", tabbableResult);
+
+    if (tabbableResult[0]) {
+      console.log("tabbableResult[0].classList", tabbableResult[0].classList);
+      console.log(
+        "nodeIsSelected(tabbableResult[0])",
+        nodeIsSelected(tabbableResult[0])
+      );
+      if (nodeIsSelected(tabbableResult[0])) {
+        selection.deselect(tabbableResult[0]);
+        tabbableResult[0].classList.remove("selected");
+      } else {
+        selection.select(tabbableResult[0]);
+        tabbableResult[0].classList.add("selected");
+      }
+    }
+    console.log("END   selection", selection);
+    console.log("");
+
     // if (isFolder(node)) {
     //   toggleFolderExpansion(node.id);
     // }
