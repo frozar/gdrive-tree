@@ -24,7 +24,7 @@ function generateSelectables(nbRepitition) {
   return prepend + expandedPattern + append;
 }
 
-function hasAncestorWithTag(node, givenTagName) {
+function hasAncestorWithTagName(node, givenTagName) {
   if (node) {
     if (node.tagName === givenTagName) {
       return true;
@@ -190,8 +190,8 @@ export const selection = new SelectionArea({
   )
   // .on("stop", ({ store: { stored } }) => console.log(stored.length));
   .on("stop", (event) => {
-    // console.log(event);
-    // console.log(event.store);
+    // console.log("event", event);
+    // console.log("event.store", event.store);
     // const selected = event.store.selected;
     // console.log(selected);
     // console.log(

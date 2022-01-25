@@ -469,12 +469,22 @@ async function handleKeyDown(event, node) {
         "nodeIsSelected(tabbableResult[0])",
         nodeIsSelected(tabbableResult[0])
       );
+      // console.log("selection._selection.changed", selection._selection.changed);
+      // console.log(
+      //   "selection._selection.selected",
+      //   selection._selection.selected
+      // );
+      // console.log("selection._selection.stored", selection._selection.stored);
       if (nodeIsSelected(tabbableResult[0])) {
         selection.deselect(tabbableResult[0]);
-        tabbableResult[0].classList.remove("selected");
+        // tabbableResult[0].classList.remove("selected");
       } else {
         selection.select(tabbableResult[0]);
-        tabbableResult[0].classList.add("selected");
+        // tabbableResult[0].classList.add("selected");
+      }
+      // console.log("selection.getSelection()", selection.getSelection());
+      for (const elt of selection.getSelection()) {
+        elt.classList.add("selected");
       }
     }
     console.log("END   selection", selection);

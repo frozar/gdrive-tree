@@ -4,34 +4,10 @@
     "node": ">=4"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
-    "autoprefixer": "^9.5.1",
-    "babelify": "^10.0.0",
-    "browser-sync": "^2.26.5",
-    "browserify": "^17.0.0",
-    "cross-env": "^5.2.0",
-    "cssnano": "^4.1.10",
-    "del": "^4.1.1",
-    "gulp": "^4.0.2",
-    "gulp-babel": "^8.0.0",
-    "gulp-cli": "^2.2.0",
-    "gulp-eslint": "^5.0.0",
-    "gulp-htmlmin": "^5.0.1",
-    "gulp-if": "^2.0.2",
-    "gulp-imagemin": "^6.0.0",
-    "gulp-load-plugins": "^1.6.0",
-    "gulp-plumber": "^1.2.1",
-    "gulp-postcss": "^8.0.0",
-    "gulp-size": "^3.0.0",
-    "gulp-uglify": "^3.0.2",
-    "gulp-useref": "^3.1.6",
-    "mocha": "^6.1.4",
-    "vinyl-buffer": "^1.0.1",
-    "vinyl-source-stream": "^2.0.0",
-    "yargs": "13.2.4"
+    "parcel": "^2.2.1"
   },
   "scripts": {
+    "dev": "parcel -p 9000 app/index.html",
     "serve:test": "cross-env NODE_ENV=test gulp serve",
     "serve:dist": "cross-env NODE_ENV=production gulp serve",
     "start": "gulp serve",
@@ -57,6 +33,7 @@
     "rules": {}
   },
   "dependencies": {
+    "@viselect/vanilla": "^3.0.0-beta.13",
     "html-escaper": "^3.0.3",
     "regenerator-runtime": "^0.13.9",
     "tabbable": "^5.2.1"
