@@ -8,12 +8,7 @@
   },
   "scripts": {
     "dev": "parcel -p 9000 app/index.html",
-    "serve:test": "cross-env NODE_ENV=test gulp serve",
-    "serve:dist": "cross-env NODE_ENV=production gulp serve",
-    "start": "gulp serve",
-    "build": "parcel build app/index.html --dist-dir ./public",
-    "test": "npm run serve:test",
-    "tasks": "gulp --tasks"
+    "build": "parcel build app/index.html --dist-dir ./public"
   },
   "browserslist": [
     "> 1%",
