@@ -454,7 +454,7 @@ async function handleKeyDown(event, node) {
   // TODO: manage SHIFT
   if (event.code === "Space") {
     event.preventDefault();
-    console.log("BEGIN selection", selection);
+    // console.log("BEGIN selection", selection);
     // console.log("node.id", node.id);
     // console.log(
     //   "document.getElementById(node.id)",
@@ -464,11 +464,11 @@ async function handleKeyDown(event, node) {
     // console.log("tabbableResult", tabbableResult);
 
     if (tabbableResult[0]) {
-      console.log("tabbableResult[0].classList", tabbableResult[0].classList);
-      console.log(
-        "nodeIsSelected(tabbableResult[0])",
-        nodeIsSelected(tabbableResult[0])
-      );
+      // console.log("tabbableResult[0].classList", tabbableResult[0].classList);
+      // console.log(
+      //   "nodeIsSelected(tabbableResult[0])",
+      //   nodeIsSelected(tabbableResult[0])
+      // );
       // console.log("selection._selection.changed", selection._selection.changed);
       // console.log(
       //   "selection._selection.selected",
@@ -487,8 +487,8 @@ async function handleKeyDown(event, node) {
         elt.classList.add("selected");
       }
     }
-    console.log("END   selection", selection);
-    console.log("");
+    // console.log("END   selection", selection);
+    // console.log("");
 
     // if (isFolder(node)) {
     //   toggleFolderExpansion(node.id);
