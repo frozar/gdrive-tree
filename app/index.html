@@ -4,22 +4,11 @@
     <meta charset="utf-8" />
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>google drive tree browser yeoman</title>
+    <title>google drive tree browser</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-    <!-- Place favicon.ico in the root directory -->
-    <!-- build:css styles/main.css -->
     <link rel="stylesheet" href="styles/main.css" />
-    <!-- endbuild -->
   </head>
   <body>
-    <!--[if IE]>
-      <p class="browserupgrade">
-        You are using an <strong>outdated</strong> browser. Please
-        <a href="http://browsehappy.com/">upgrade your browser</a> to improve
-        your experience.
-      </p>
-    <![endif]-->
-
     <header>
       <nav id="nav_bar">
         <div id="nav_links" style="display: none">
@@ -45,10 +34,6 @@
       onload="this.onload=function(){};"
       onreadystatechange="if (this.readyState === 'complete') this.onload()"
     ></script>
-    <!-- build:js scripts/vendor.js -->
-    <!-- endbuild -->
-    <!-- build:js scripts/main.js -->
-    <script src="scripts/bundle.js"></script>
-    <!-- endbuild -->
+    <script type="module" src="scripts/main.js"></script>
   </body>
 </html>

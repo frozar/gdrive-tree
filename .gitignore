@@ -15,3 +15,6 @@ bower_components
 Thumbs.db
 
 note.txt
+
+# Parcel
+.parcel-cache/
