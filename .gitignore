@@ -1,20 +1,2 @@
 # dependencies
 node_modules
-bower_components
-
-# compiled output
-/dist
-/public
-/.tmp
-
-# VS Code
-.vscode
-
-# System Files
-.DS_Store
-Thumbs.db
-
-note.txt
-
-# Parcel
-.parcel-cache/
