@@ -1,28 +1,18 @@
-// import "regenerator-runtime";
-
-// import "./router";
-// import show, { appendToContent, createHTMLText } from "./tree";
-// import "./button_toggle_all";
-// import "./new_folder.js";
-// import "./selection";
-
-import { produce } from "solid-js/store";
-
-import { store, setStore } from "./App";
+import { defaultStore, setStore } from "./index";
 
 // Client ID and API key from the Developer Console
-let CLIENT_ID =
+const CLIENT_ID =
   "368874607594-nvsbjbq932pdvgcegs4qsuhh46ni7jo7.apps.googleusercontent.com";
-let API_KEY = "AIzaSyBZlbqrkQQ18akLJQ5cZV4ITpT5Om5QMGg";
+const API_KEY = "AIzaSyBZlbqrkQQ18akLJQ5cZV4ITpT5Om5QMGg";
 
 // Array of API discovery doc URLs for APIs used by the quickstart
-let DISCOVERY_DOCS = [
+const DISCOVERY_DOCS = [
   "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
 ];
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-let SCOPES = [
+const SCOPES = [
   "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/drive.appdata",
   "https://www.googleapis.com/auth/drive.file",
@@ -35,30 +25,81 @@ let SCOPES = [
   "https://www.googleapis.com/auth/drive.scripts",
 ].join(" ");
 
-/**
- *  On load, called to load the auth2 library and API client library.
- */
-export function handleClientHotReload() {
-  console.log("handleClientHotReload typeof gapi", typeof gapi);
-  setStore("isSessionInitialised", () => typeof gapi !== "undefined");
+// /**
+//  *  On load, called to load the auth2 library and API client library.
+//  */
+// export function handleClientHotReload() {
+//   console.log("handleClientHotReload typeof gapi", typeof gapi);
 
-  if (typeof gapi !== "undefined") {
+//   const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
+
+//   updateUserInformation(isSignedIn);
+
+//   console.info("Hot Reload: DONE");
+// }
+
+export function checkSignInStatus() {
+  console.log("BEG checkSignInStatus");
+  // console.log("gapi.auth2", gapi.auth2);
+  // console.log("gapi.auth2.getAuthInstance()", gapi.auth2.getAuthInstance());
+  if (
+    gapi &&
+    gapi.auth2 &&
+    gapi.auth2.getAuthInstance() &&
+    gapi.auth2.getAuthInstance().isSingedIn
+  ) {
+    // // Listen for sign-in state changes.
+    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSession);
+    // console.dir(gapi.auth2.getAuthInstance().isSignedIn);
+
     const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
+    // console.log(
+    //   "checkSignInStatus gapi.auth2.getAuthInstance().isSignedIn.get()",
+    //   isSignedIn
+    // );
 
-    updateSigninStatus(isSignedIn);
+    updateSession(isSignedIn);
 
-    console.info("Hot Reload: DONE");
+    setStore("isSignedIn", () => isSignedIn);
   }
+  setStore("isInitialising", () => false);
+  console.log("END checkSignInStatus");
 }
 
 /**
  *  On load, called to load the auth2 library and API client library.
  */
 export function handleClientLoad() {
-  if (typeof gapi !== "undefined") {
-    gapi.load("client:auth2", initClient);
-  }
+  gapi.load("client:auth2", initClient);
 }
+
+// function updateEnvironment() {
+//   console.log("BEG updateEnvironment");
+//   console.log("gapi.auth2", gapi.auth2);
+//   console.log("gapi.auth2.getAuthInstance()", gapi.auth2.getAuthInstance());
+//   if (
+//     gapi &&
+//     gapi.auth2 &&
+//     gapi.auth2.getAuthInstance() &&
+//     gapi.auth2.getAuthInstance().isSingedIn
+//   ) {
+//     // Listen for sign-in state changes.
+//     gapi.auth2.getAuthInstance().isSignedIn.listen(updateUserInformation);
+//     console.dir(gapi.auth2.getAuthInstance().isSignedIn);
+
+//     const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
+//     console.log(
+//       "initClient gapi.auth2.getAuthInstance().isSignedIn.get()",
+//       isSignedIn
+//     );
+
+//     updateUserInformation(isSignedIn);
+
+//     setStore("isSignedIn", () => isSignedIn);
+//     console.info("Initialisation gapi: DONE");
+//   }
+//   console.log("END updateEnvironment");
+// }
 
 /**
  *  Initializes the API client library and sets up sign-in state
@@ -66,6 +107,10 @@ export function handleClientLoad() {
  */
 function initClient() {
   console.info("Process gapi initialisation...");
+  // try {
+  //   updateEnvironment();
+  // } catch (error) {
+  //   console.error(error);
   gapi.client
     .init({
       apiKey: API_KEY,
@@ -73,48 +118,63 @@ function initClient() {
       discoveryDocs: DISCOVERY_DOCS,
       scope: SCOPES,
     })
-    .then(function () {
+    .then(() => {
+      console.log("BEG In THEN init");
+      // updateEnvironment();
+
       // Listen for sign-in state changes.
-      gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+      gapi.auth2.getAuthInstance().isSignedIn.listen(updateSession);
+      // console.dir(gapi.auth2.getAuthInstance().isSignedIn);
 
       const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
       console.log(
         "initClient gapi.auth2.getAuthInstance().isSignedIn.get()",
         isSignedIn
       );
-      // Handle the initial sign-in state.
-      updateSigninStatus(isSignedIn);
 
-      setStore("isSessionInitialised", () => true);
+      // Handle the initial sign-in state.
+      updateSession(isSignedIn);
+
+      setStore("isInitialising", () => false);
       setStore("isSignedIn", () => isSignedIn);
       console.info("Initialisation gapi: DONE");
+      console.log("END In THEN init");
     })
     .catch(function (error) {
       console.error("Initialisation gapi: FAILURE");
       console.error(error);
-      setStore("isSessionInitialised", () => true);
+      setStore("isInitialising", () => false);
       const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
       setStore("isSignedIn", () => isSignedIn);
     });
+  // }
 }
 
-/**
- *  Called when the signed in status changes, to update the UI
- *  appropriately. After a sign-in, the API is called.
- */
-function updateSigninStatus(isSignedIn) {
-  if (store.isSignedIn !== isSignedIn) {
-    setStore("isSignedIn", () => isSignedIn);
-  }
+export function updateCurrentUser(currentUser) {
+  const basicProfile = currentUser.getBasicProfile();
+  var id_token = currentUser.getAuthResponse().id_token;
 
+  setStore("userToken", () => id_token);
+  setStore("userFullName", () => basicProfile.getName());
+  setStore("userAvatarUrl", () => basicProfile.getImageUrl());
+}
+
+function updateSession(isSignedIn) {
+  setStore("isLogging", () => false);
+  setStore("isSignedIn", () => isSignedIn);
   // Grab user information if logged
   if (isSignedIn) {
     const currentUser = gapi.auth2.getAuthInstance().currentUser.get();
-    const basicProfile = currentUser.getBasicProfile();
-    var id_token = currentUser.getAuthResponse().id_token;
+    updateCurrentUser(currentUser);
+    // const basicProfile = currentUser.getBasicProfile();
+    // var id_token = currentUser.getAuthResponse().id_token;
 
-    setStore("userToken", () => id_token);
-    setStore("userFullName", () => basicProfile.getName());
-    setStore("userAvatarUrl", () => basicProfile.getImageUrl());
+    // setStore("userToken", () => id_token);
+    // setStore("userFullName", () => basicProfile.getName());
+    // setStore("userAvatarUrl", () => basicProfile.getImageUrl());
+  } else {
+    setStore("userToken", () => defaultStore.userToken);
+    setStore("userFullName", () => defaultStore.userFullName);
+    setStore("userAvatarUrl", () => defaultStore.userAvatarUrl);
   }
 }
