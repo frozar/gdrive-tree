@@ -17,8 +17,8 @@ export const defaultStore = {
 
 export const [store, setStore] = createStore(defaultStore);
 
+// HMR code
 if (import.meta.hot) {
-  // HMR code
   import.meta.hot.on("vite:beforeUpdate", () => {
     setStore("isGapiAvailable", () => true);
     checkSignInStatus();

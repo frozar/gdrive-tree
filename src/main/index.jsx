@@ -3,7 +3,7 @@ import Tree from "./Tree";
 
 const Main = () => {
   return (
-    <main class="transition-transform" style="transition-duration: 300ms;">
+    <main class="transition-transform custom-transition-duration">
       <Tabs />
       <Tree initSwitch="drive" />
     </main>

@@ -6,9 +6,6 @@
 .lds-hourglass {
   display: inline-block;
   position: relative;
-  /* width: 3rem;
-  height: 3rem; */
-  /* margin-right: 10px; */
 }
 .lds-hourglass:after {
   content: " ";
@@ -49,11 +46,14 @@ body {
 }
 
 main {
-  /* padding-top: calc(var(--nav-height) + 0.5rem); */
   padding-top: calc(4.5rem);
   min-height: 100vh;
 }
 
 .header--hidden {
   transform: translateY(calc(-1 * var(--nav-height)));
+}
+
+.custom-transition-duration {
+  transition-duration: 300ms;
 }

@@ -25,45 +25,25 @@ const SCOPES = [
   "https://www.googleapis.com/auth/drive.scripts",
 ].join(" ");
 
-// /**
-//  *  On load, called to load the auth2 library and API client library.
-//  */
-// export function handleClientHotReload() {
-//   console.log("handleClientHotReload typeof gapi", typeof gapi);
-
-//   const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
-
-//   updateUserInformation(isSignedIn);
-
-//   console.info("Hot Reload: DONE");
-// }
-
 export function checkSignInStatus() {
-  console.log("BEG checkSignInStatus");
-  // console.log("gapi.auth2", gapi.auth2);
-  // console.log("gapi.auth2.getAuthInstance()", gapi.auth2.getAuthInstance());
+  // console.info("BEG checkSignInStatus");
   if (
     gapi &&
     gapi.auth2 &&
     gapi.auth2.getAuthInstance() &&
     gapi.auth2.getAuthInstance().isSingedIn
   ) {
-    // // Listen for sign-in state changes.
+    // Listen for sign-in state changes.
     gapi.auth2.getAuthInstance().isSignedIn.listen(updateSession);
-    // console.dir(gapi.auth2.getAuthInstance().isSignedIn);
 
     const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
-    // console.log(
-    //   "checkSignInStatus gapi.auth2.getAuthInstance().isSignedIn.get()",
-    //   isSignedIn
-    // );
 
     updateSession(isSignedIn);
 
     setStore("isSignedIn", () => isSignedIn);
   }
   setStore("isInitialising", () => false);
-  console.log("END checkSignInStatus");
+  // console.info("END checkSignInStatus");
 }
 
 /**
@@ -73,44 +53,13 @@ export function handleClientLoad() {
   gapi.load("client:auth2", initClient);
 }
 
-// function updateEnvironment() {
-//   console.log("BEG updateEnvironment");
-//   console.log("gapi.auth2", gapi.auth2);
-//   console.log("gapi.auth2.getAuthInstance()", gapi.auth2.getAuthInstance());
-//   if (
-//     gapi &&
-//     gapi.auth2 &&
-//     gapi.auth2.getAuthInstance() &&
-//     gapi.auth2.getAuthInstance().isSingedIn
-//   ) {
-//     // Listen for sign-in state changes.
-//     gapi.auth2.getAuthInstance().isSignedIn.listen(updateUserInformation);
-//     console.dir(gapi.auth2.getAuthInstance().isSignedIn);
-
-//     const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
-//     console.log(
-//       "initClient gapi.auth2.getAuthInstance().isSignedIn.get()",
-//       isSignedIn
-//     );
-
-//     updateUserInformation(isSignedIn);
-
-//     setStore("isSignedIn", () => isSignedIn);
-//     console.info("Initialisation gapi: DONE");
-//   }
-//   console.log("END updateEnvironment");
-// }
-
 /**
  *  Initializes the API client library and sets up sign-in state
  *  listeners.
  */
 function initClient() {
   console.info("Process gapi initialisation...");
-  // try {
-  //   updateEnvironment();
-  // } catch (error) {
-  //   console.error(error);
+
   gapi.client
     .init({
       apiKey: API_KEY,
@@ -119,12 +68,8 @@ function initClient() {
       scope: SCOPES,
     })
     .then(() => {
-      console.log("BEG In THEN init");
-      // updateEnvironment();
-
       // Listen for sign-in state changes.
       gapi.auth2.getAuthInstance().isSignedIn.listen(updateSession);
-      // console.dir(gapi.auth2.getAuthInstance().isSignedIn);
 
       const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
       console.log(
@@ -138,7 +83,6 @@ function initClient() {
       setStore("isInitialising", () => false);
       setStore("isSignedIn", () => isSignedIn);
       console.info("Initialisation gapi: DONE");
-      console.log("END In THEN init");
     })
     .catch(function (error) {
       console.error("Initialisation gapi: FAILURE");
@@ -147,7 +91,6 @@ function initClient() {
       const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
       setStore("isSignedIn", () => isSignedIn);
     });
-  // }
 }
 
 export function updateCurrentUser(currentUser) {
@@ -162,16 +105,11 @@ export function updateCurrentUser(currentUser) {
 function updateSession(isSignedIn) {
   setStore("isLogging", () => false);
   setStore("isSignedIn", () => isSignedIn);
+
   // Grab user information if logged
   if (isSignedIn) {
     const currentUser = gapi.auth2.getAuthInstance().currentUser.get();
     updateCurrentUser(currentUser);
-    // const basicProfile = currentUser.getBasicProfile();
-    // var id_token = currentUser.getAuthResponse().id_token;
-
-    // setStore("userToken", () => id_token);
-    // setStore("userFullName", () => basicProfile.getName());
-    // setStore("userAvatarUrl", () => basicProfile.getImageUrl());
   } else {
     setStore("userToken", () => defaultStore.userToken);
     setStore("userFullName", () => defaultStore.userFullName);

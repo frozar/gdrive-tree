@@ -44,11 +44,7 @@ function buildFilesListArg(args) {
 }
 
 async function gFilesList(args) {
-  // if (store.isSignedIn) {
   return await gapi.client.drive.files.list(buildFilesListArg(args));
-  // } else {
-  //   return [];
-  // }
 }
 
 async function loopRequest(listOptions) {
@@ -175,88 +171,44 @@ async function initEveryNodes() {
 }
 
 const Tree = (props) => {
-  // console.log("Tree props", props);
   const { initSwitch } = props;
-  // console.log("Tree initSwitch", initSwitch);
 
-  // const [nodes, setNodes] = createSignal([]);
-  // createEffect(() => {
-  //   console.log("Tree createEffect");
-  //   if (store.isSignedIn) {
-  //     switch (initSwitch) {
-  //       case "drive":
-  //         // setNodes(async (nodes) => await initNodesFromRoot());
-  //         break;
-  //       case "share":
-  //         setNodes(async (nodes) => await initSharedNodes());
-  //         break;
-  //       case "every":
-  //         setNodes(async (nodes) => await initEveryNodes());
-  //         break;
-  //       default:
-  //         console.error(`initSwitch "${initSwitch}" is not handled.`);
-  //     }
-  //   }
-  //   console.log("Tree nodes", nodes());
-  // });
-
-  const [loading, setLoading] = createSignal(true);
-
-  // const nodes = async () => {
-  //   setLoading(true);
-  //   console.log("Tree Derived signal store.isSignedIn", store.isSignedIn);
-  //   if (store.isSignedIn) {
-  //     const newNodes = await initNodesFromRoot();
-  //     console.log("newNodes", newNodes);
-  //     setLoading(false);
-  //     return newNodes;
-  //   } else {
-  //     setLoading(false);
-  //     return [];
-  //   }
-  // };
   const [nodes, setNodes] = createSignal([]);
 
   createEffect(async () => {
     console.log("Tree createEffect store.isSignedIn", store.isSignedIn);
     if (store.isSignedIn) {
-      const newNodes = await initNodesFromRoot();
-      // console.log("newNodes", newNodes);
+      let newNodes = [];
+
+      switch (initSwitch) {
+        case "drive":
+          newNodes = await initNodesFromRoot();
+          break;
+        case "share":
+          newNodes = await initSharedNodes();
+          break;
+        case "every":
+          newNodes = await initEveryNodes();
+          break;
+        default:
+          console.error(`initSwitch "${initSwitch}" is not handled.`);
+      }
+
       if (!_.isEqual(nodes(), newNodes)) {
         setNodes(newNodes);
       }
-      // setLoading(false);
-      // return newNodes;
     }
-    // else {
-    //   const newNodes = [];
-    //   if (!_.isEqual(nodes(), newNodes)) {
-    //     setNodes(newNodes);
-    //   }
-    //   // setLoading(false);
-    //   // return [];
-    // }
   });
 
-  // return <h1>TREE</h1>;
-  // return <h1>{nodes()}</h1>;
-  // return (
-  //   <ul>
-  //     <For each={nodes()}>{(node, i) => <li>{node.name}</li>}</For>
-  //   </ul>
-  // );
   return (
     <Show
       when={!(store.isInitialising || store.isLogging)}
       fallback={<h1>Loading</h1>}
     >
       <Show when={store.isSignedIn} fallback={<h1>Not Sign In</h1>}>
-        <>
-          <h1>Everything</h1>
-          <ul>
-            <For each={nodes()}>{(node, i) => <li>{node.name}</li>}</For>
-          </ul>
-        </>
+        <ul>
+          <For each={nodes()}>{(node, i) => <li>{node.name}</li>}</For>
+        </ul>
       </Show>
     </Show>
   );
