@@ -2,7 +2,7 @@ import { createSignal, createEffect, Show } from "solid-js";
 import _ from "lodash";
 
 import { store, setStore } from "../index";
-import Node from "./Node";
+import Tree from "./tree";
 
 /**
  * Maps a node id to an array of children nodes.
@@ -130,7 +130,7 @@ async function getNodesFromDirectory(pageSize, fields, folderId) {
   return result;
 }
 
-async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
+export async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
   return await higherGetSortedNodes(
     getNodesFromDirectory,
     pageSize,
@@ -172,7 +172,7 @@ async function initEveryNodes() {
   return await getSortedEveryNodes(999, "*");
 }
 
-const Tree = (props) => {
+const TreeContainer = (props) => {
   const { initSwitch } = props;
 
   const [nodes, setNodes] = createSignal([]);
@@ -208,12 +208,10 @@ const Tree = (props) => {
       fallback={<h1>Loading</h1>}
     >
       <Show when={store.isSignedIn} fallback={<h1>Not Sign In</h1>}>
-        <ul>
-          <For each={nodes()}>{(node, i) => <Node node={node} />}</For>
-        </ul>
+        <Tree nodes={nodes} />
       </Show>
     </Show>
   );
 };
 
-export default Tree;
+export default TreeContainer;

@@ -1,5 +1,6 @@
 import { store, setStore } from "../index";
 import { updateCurrentUser } from "../authentification";
+import SpinningWheel from "../SpinningWheel";
 
 /**
  *  Sign in the user upon button click.
@@ -34,6 +35,10 @@ function handleSignoutClick() {
 }
 
 const LoginButton = () => {
+  const BigSpinningWheel = () => {
+    return <SpinningWheel size="big" />;
+  };
+
   return (
     <Show
       when={store.isInitialising}
@@ -58,7 +63,7 @@ const LoginButton = () => {
                 onClick={handleAuthClick}
                 disabled={store.isLogging}
               >
-                <div class="lds-hourglass"></div>
+                <BigSpinningWheel />
               </button>
             </Show>
           }
@@ -83,7 +88,7 @@ const LoginButton = () => {
         onClick={handleAuthClick}
         disabled={store.isInitialising}
       >
-        <div class="lds-hourglass"></div>
+        <BigSpinningWheel />
       </button>
     </Show>
   );

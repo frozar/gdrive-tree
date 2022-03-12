@@ -1,11 +1,11 @@
 import Tabs from "./Tabs";
-import Tree from "./Tree";
+import TreeContainer from "./TreeContainer";
 
 const Main = () => {
   return (
     <main class="transition-transform custom-transition-duration">
       <Tabs />
-      <Tree initSwitch="drive" />
+      <TreeContainer initSwitch="drive" />
     </main>
   );
 };

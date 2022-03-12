@@ -7,6 +7,16 @@
   display: inline-block;
   position: relative;
 }
+.lds-hourglass-big {
+}
+.lds-hourglass-big:after {
+  border-width: 1.4rem;
+}
+.lds-hourglass-small {
+}
+.lds-hourglass-small:after {
+  border-width: 0.5rem;
+}
 .lds-hourglass:after {
   content: " ";
   display: block;
@@ -15,7 +25,7 @@
   height: 0;
   margin: 0px;
   box-sizing: border-box;
-  border: 1.4rem solid #fff;
+  border-style: solid;
   border-color: #3d4451 transparent #3d4451 transparent;
   animation: lds-hourglass 1.2s infinite;
 }
@@ -86,3 +96,9 @@ main {
 .arrow {
   fill: #3d4451dd;
 }
+
+/* {
+  outline-color: #ffffff;
+  outline-style: dashed;
+  outline-width: 2px;
+} */
