@@ -1,6 +1,8 @@
 import { createSignal, createEffect, Show } from "solid-js";
 import _ from "lodash";
+
 import { store, setStore } from "../index";
+import Node from "./Node";
 
 /**
  * Maps a node id to an array of children nodes.
@@ -207,7 +209,7 @@ const Tree = (props) => {
     >
       <Show when={store.isSignedIn} fallback={<h1>Not Sign In</h1>}>
         <ul>
-          <For each={nodes()}>{(node, i) => <li>{node.name}</li>}</For>
+          <For each={nodes()}>{(node, i) => <Node node={node} />}</For>
         </ul>
       </Show>
     </Show>

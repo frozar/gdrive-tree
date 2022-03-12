@@ -57,3 +57,32 @@ main {
 .custom-transition-duration {
   transition-duration: 300ms;
 }
+
+.folder-surrounding-span,
+.selectable {
+  align-items: center;
+  box-sizing: border-box;
+  display: inline-flex;
+  height: 1.5em;
+}
+
+.selectable {
+  cursor: pointer;
+}
+
+.file {
+  margin-left: 16px;
+}
+
+.arrow-container {
+  transition-timing-function: ease;
+  transition-delay: 0s;
+}
+
+.expand-folder {
+  transform: rotate(90deg);
+}
+
+.arrow {
+  fill: #3d4451dd;
+}

@@ -7,10 +7,10 @@ import { store } from "./index";
 let isHeaderHidden = false;
 
 function watchMouseMove(event) {
+  const header = document.getElementsByTagName("header").item(0);
+  const main = document.getElementsByTagName("main").item(0);
+  const hiddenClass = "header--hidden";
   if (store.isGapiAvailable && store.isSignedIn) {
-    const header = document.getElementsByTagName("header").item(0);
-    const main = document.getElementsByTagName("main").item(0);
-    const hiddenClass = "header--hidden";
     if (isHeaderHidden && event.clientY < 24) {
       header.classList.remove(hiddenClass);
       main.classList.remove(hiddenClass);
@@ -20,6 +20,10 @@ function watchMouseMove(event) {
       main.classList.add(hiddenClass);
       isHeaderHidden = !isHeaderHidden;
     }
+  } else {
+    header.classList.remove(hiddenClass);
+    main.classList.remove(hiddenClass);
+    isHeaderHidden = !isHeaderHidden;
   }
 }
 
