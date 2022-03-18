@@ -1,9 +1,8 @@
 import { defaultStore, setStore } from "./index";
 
 // Client ID and API key from the Developer Console
-const CLIENT_ID =
-  "368874607594-nvsbjbq932pdvgcegs4qsuhh46ni7jo7.apps.googleusercontent.com";
-const API_KEY = "AIzaSyBZlbqrkQQ18akLJQ5cZV4ITpT5Om5QMGg";
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 // Array of API discovery doc URLs for APIs used by the quickstart
 const DISCOVERY_DOCS = [
