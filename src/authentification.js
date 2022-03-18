@@ -72,10 +72,7 @@ function initClient() {
       gapi.auth2.getAuthInstance().isSignedIn.listen(updateSession);
 
       const isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get();
-      console.log(
-        "initClient gapi.auth2.getAuthInstance().isSignedIn.get()",
-        isSignedIn
-      );
+      console.info("initClient isSignedIn", isSignedIn);
 
       // Handle the initial sign-in state.
       updateSession(isSignedIn);

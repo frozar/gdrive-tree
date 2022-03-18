@@ -97,8 +97,18 @@ main {
   fill: #3d4451dd;
 }
 
-/* {
-  outline-color: #ffffff;
-  outline-style: dashed;
-  outline-width: 2px;
-} */
+.tree {
+  transform: translateY(-100%);
+  transition-property: transform;
+  transition-timing-function: ease-in-out;
+}
+
+.tree--open {
+  transform: translateY(0%);
+}
+
+.tree-container-animation {
+  max-height: 0px;
+  transition-property: max-height;
+  transition-timing-function: ease-in-out;
+}

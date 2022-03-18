@@ -1,7 +1,7 @@
 const File = (props) => {
   const { node } = props;
   return (
-    <li id={node.id}>
+    <li id={node.id} class="py-1">
       <span class="selectable file" tabindex="0">
         <img src={node.iconLink} />
         <span

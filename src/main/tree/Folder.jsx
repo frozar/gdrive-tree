@@ -1,4 +1,4 @@
-import { createSignal } from "solid-js";
+import { createSignal, onMount } from "solid-js";
 
 import { getSortedNodesFromDirectory } from "../TreeContainer";
 import Tree from "./index";
@@ -32,7 +32,7 @@ const ArrowIcon = (props) => {
           }
         } else {
           currentTarget.classList.remove("expand-folder");
-          setSubNodes([]);
+          // setSubNodes([]);
         }
       }}
     >
@@ -57,13 +57,34 @@ const Folder = (props) => {
   const [isExpanded, setIsExpanded] = createSignal(false);
   const [isExpanding, setIsExpanding] = createSignal(false);
   const [subNodes, setSubNodes] = createSignal([]);
+  const [subNodesFetched, setSubNodesFetched] = createSignal(false);
 
   const SmallSpinningWheel = () => {
     return <SpinningWheel size="small" className="ml-2" />;
   };
+
+  onMount(async () => {
+    const nodes = await getSortedNodesFromDirectory(999, "*", id);
+    setSubNodes(nodes);
+    setSubNodesFetched(true);
+  });
+
+  const classList = () => {
+    const classListBase = [];
+    // if (isExpanded()) {
+    //   classListBase.push("collapse-open");
+    // } else {
+    //   classListBase.push("collapse-close");
+    // }
+    return classListBase.join(" ");
+  };
   return (
-    <li id={node.id}>
-      <span class="folder-surrounding-span">
+    <li id={node.id} class={classList()}>
+      <span
+        class="folder-surrounding-span"
+        // class="collapse-title p-0 folder-surrounding-span"
+        // style="height: auto; min-height: auto;"
+      >
         <ArrowIcon
           isExpanded={isExpanded}
           setIsExpanded={setIsExpanded}
@@ -71,10 +92,7 @@ const Folder = (props) => {
           id={id}
           setSubNodes={setSubNodes}
         />
-        <span
-          class="selectable focus:ring focus:ring-violet-300 focus-visible:ring focus-visible:ring-violet-300 focus-visible:outline-dashed"
-          tabindex="0"
-        >
+        <span class="selectable" tabindex="0">
           <img src={node.iconLink} />
           <span
             style="margin-left: 4px; margin-right: 2px"
@@ -83,9 +101,11 @@ const Folder = (props) => {
             {node.name}
           </span>
         </span>
+        {isExpanding() && <SmallSpinningWheel />}
       </span>
-      {isExpanding() && <SmallSpinningWheel />}
-      <Tree nodes={subNodes} hasMargin={true} />
+      {subNodesFetched() && (
+        <Tree isRoot={false} nodes={subNodes} isExpanded={isExpanded} />
+      )}
     </li>
   );
 };

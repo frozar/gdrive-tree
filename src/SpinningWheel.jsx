@@ -17,7 +17,7 @@ const SpinningWheel = (props) => {
     }
   }
   classList = classList.join(" ");
-  return <div class={classList}></div>;
+  return <span class={classList}></span>;
 };
 
 export default SpinningWheel;

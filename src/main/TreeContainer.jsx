@@ -178,7 +178,7 @@ const TreeContainer = (props) => {
   const [nodes, setNodes] = createSignal([]);
 
   createEffect(async () => {
-    console.log("Tree createEffect store.isSignedIn", store.isSignedIn);
+    // console.log("TreeContainer createEffect store.isSignedIn", store.isSignedIn);
     if (store.isSignedIn) {
       let newNodes = [];
 
@@ -208,7 +208,7 @@ const TreeContainer = (props) => {
       fallback={<h1>Loading</h1>}
     >
       <Show when={store.isSignedIn} fallback={<h1>Not Sign In</h1>}>
-        <Tree nodes={nodes} />
+        <Tree isRoot={true} nodes={nodes} isExpanded={() => true} />
       </Show>
     </Show>
   );
