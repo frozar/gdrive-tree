@@ -1,15 +1,11 @@
-import { createSignal, onMount } from "solid-js";
+import { createSignal, createEffect } from "solid-js";
 
 import { getSortedNodesFromDirectory } from "../TreeContainer";
 import Tree from "./index";
 import SpinningWheel from "../../SpinningWheel";
 
 const ArrowIcon = (props) => {
-  const { isExpanded, setIsExpanded, setIsExpanding, id, setSubNodes } = props;
-
-  function toggleExpanded() {
-    setIsExpanded((isExpanded) => !isExpanded);
-  }
+  const { isExpanded, setIsExpanded, toggleExpanded } = props;
 
   return (
     <span
@@ -19,20 +15,8 @@ const ArrowIcon = (props) => {
         toggleExpanded();
         if (isExpanded()) {
           currentTarget.classList.add("expand-folder");
-
-          try {
-            setIsExpanding(true);
-            const nodes = await getSortedNodesFromDirectory(999, "*", id);
-            // console.log("nodes", nodes);
-            setSubNodes(nodes);
-            setIsExpanding(false);
-          } catch (error) {
-            console.error(error);
-            setIsExpanding(false);
-          }
         } else {
           currentTarget.classList.remove("expand-folder");
-          // setSubNodes([]);
         }
       }}
     >
@@ -50,61 +34,79 @@ const ArrowIcon = (props) => {
   );
 };
 
+async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
+  if (fetchState() !== "done") {
+    try {
+      setFetchState("running");
+      const nodes = await getSortedNodesFromDirectory(999, "*", id);
+      setSubNodes(nodes);
+      setFetchState("done");
+    } catch (error) {
+      console.error(error);
+      setFetchState("failed");
+    }
+  }
+}
+
 const Folder = (props) => {
-  const { node } = props;
-  const { id } = node;
+  const { node, setParentHeight, isParentExpanded } = props;
+  const { id, name } = node;
 
   const [isExpanded, setIsExpanded] = createSignal(false);
-  const [isExpanding, setIsExpanding] = createSignal(false);
   const [subNodes, setSubNodes] = createSignal([]);
-  const [subNodesFetched, setSubNodesFetched] = createSignal(false);
+  const [fetchState, setFetchState] = createSignal("init");
 
   const SmallSpinningWheel = () => {
     return <SpinningWheel size="small" className="ml-2" />;
   };
 
-  onMount(async () => {
-    const nodes = await getSortedNodesFromDirectory(999, "*", id);
-    setSubNodes(nodes);
-    setSubNodesFetched(true);
+  function toggleExpanded() {
+    setIsExpanded((isExpanded) => !isExpanded);
+  }
+
+  // Fetch only if the parent tree has been expanded once.
+  createEffect(() => {
+    if (isParentExpanded()) {
+      fetchSubNodes(id, fetchState, setFetchState, setSubNodes);
+    }
   });
 
-  const classList = () => {
-    const classListBase = [];
-    // if (isExpanded()) {
-    //   classListBase.push("collapse-open");
-    // } else {
-    //   classListBase.push("collapse-close");
-    // }
-    return classListBase.join(" ");
-  };
   return (
-    <li id={node.id} class={classList()}>
-      <span
-        class="folder-surrounding-span"
-        // class="collapse-title p-0 folder-surrounding-span"
-        // style="height: auto; min-height: auto;"
-      >
+    <li id={node.id}>
+      <span class="folder-surrounding-span">
         <ArrowIcon
           isExpanded={isExpanded}
           setIsExpanded={setIsExpanded}
-          setIsExpanding={setIsExpanding}
-          id={id}
-          setSubNodes={setSubNodes}
+          toggleExpanded={toggleExpanded}
         />
-        <span class="selectable" tabindex="0">
+        <span
+          class="selectable"
+          tabindex="0"
+          onClick={(e) => {
+            // Handle only double click
+            if (e.detail === 2) {
+              toggleExpanded();
+            }
+          }}
+        >
           <img src={node.iconLink} />
           <span
             style="margin-left: 4px; margin-right: 2px"
             contenteditable="false"
           >
-            {node.name}
+            {name}
           </span>
         </span>
-        {isExpanding() && <SmallSpinningWheel />}
+        {fetchState() === "running" && <SmallSpinningWheel />}
       </span>
-      {subNodesFetched() && (
-        <Tree isRoot={false} nodes={subNodes} isExpanded={isExpanded} />
+      {fetchState() === "done" && (
+        <Tree
+          isRoot={false}
+          nodes={subNodes}
+          isExpanded={isExpanded}
+          setParentHeight={setParentHeight}
+          name={name}
+        />
       )}
     </li>
   );

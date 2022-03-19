@@ -78,6 +78,7 @@ main {
 
 .selectable {
   cursor: pointer;
+  user-select: none;
 }
 
 .file {
@@ -87,6 +88,7 @@ main {
 .arrow-container {
   transition-timing-function: ease;
   transition-delay: 0s;
+  cursor: pointer;
 }
 
 .expand-folder {
@@ -108,7 +110,8 @@ main {
 }
 
 .tree-container-animation {
-  max-height: 0px;
-  transition-property: max-height;
+  /* max-height: 0px; */
+  height: 0px;
+  transition-property: height;
   transition-timing-function: ease-in-out;
 }

@@ -208,7 +208,7 @@ const TreeContainer = (props) => {
       fallback={<h1>Loading</h1>}
     >
       <Show when={store.isSignedIn} fallback={<h1>Not Sign In</h1>}>
-        <Tree isRoot={true} nodes={nodes} isExpanded={() => true} />
+        <Tree isRoot={true} nodes={nodes} name={"root"} />
       </Show>
     </Show>
   );
