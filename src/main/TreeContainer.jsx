@@ -186,7 +186,7 @@ const TreeContainer = (props) => {
         case "drive":
           newNodes = await initNodesFromRoot();
           break;
-        case "share":
+        case "shared":
           newNodes = await initSharedNodes();
           break;
         case "every":

@@ -6,6 +6,7 @@ import { store } from "./index";
 
 let isHeaderHidden = false;
 
+// TODO: replace this evnet by a mouse over on the main bar
 function watchMouseMove(event) {
   const header = document.getElementsByTagName("header").item(0);
   const main = document.getElementsByTagName("main").item(0);

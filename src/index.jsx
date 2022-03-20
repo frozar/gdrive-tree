@@ -1,5 +1,6 @@
 import { render } from "solid-js/web";
 import { createStore } from "solid-js/store";
+import { Router } from "solid-app-router";
 
 import "./index.css";
 import App from "./App";
@@ -25,7 +26,14 @@ if (import.meta.hot) {
   });
 }
 
-render(() => <App />, document.getElementById("app"));
+render(
+  () => (
+    <Router>
+      <App />
+    </Router>
+  ),
+  document.getElementById("app")
+);
 
 /**
  * Wait for the google variable 'gapi' to be defined
