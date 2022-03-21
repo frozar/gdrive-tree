@@ -176,10 +176,11 @@ const TreeContainer = (props) => {
   const { initSwitch } = props;
 
   const [nodes, setNodes] = createSignal([]);
+  const [isLoading, setIsLoading] = createSignal(true);
 
   createEffect(async () => {
-    // console.log("TreeContainer createEffect store.isSignedIn", store.isSignedIn);
     if (store.isSignedIn) {
+      setIsLoading(true);
       let newNodes = [];
 
       switch (initSwitch) {
@@ -199,15 +200,16 @@ const TreeContainer = (props) => {
       if (!_.isEqual(nodes(), newNodes)) {
         setNodes(newNodes);
       }
+      setIsLoading(false);
     }
   });
 
   return (
-    <Show
-      when={!(store.isInitialising || store.isLogging)}
-      fallback={<h1>Loading</h1>}
-    >
-      <Show when={store.isSignedIn} fallback={<h1>Not Sign In</h1>}>
+    <Show when={store.isSignedIn} fallback={<h1>Not Sign In</h1>}>
+      <Show
+        when={!(store.isInitialising || store.isLogging || isLoading())}
+        fallback={<h1>Loading</h1>}
+      >
         <Tree isRoot={true} nodes={nodes} name={"root"} />
       </Show>
     </Show>
