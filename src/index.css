@@ -60,7 +60,7 @@ main {
   min-height: 100vh;
 }
 
-.header--hidden {
+.top-bar--hidden {
   transform: translateY(calc(-1 * var(--nav-height)));
 }
 
