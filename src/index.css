@@ -55,9 +55,10 @@ body {
   --nav-height: 3rem;
 }
 
+/* min-height: 100vh; */
 main {
   padding-top: calc(4.5rem);
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .top-bar--hidden {
@@ -114,4 +115,11 @@ main {
   height: 0px;
   transition-property: height;
   transition-timing-function: ease-in-out;
+}
+
+#show-files-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100% - 2rem);
 }

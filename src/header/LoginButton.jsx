@@ -1,5 +1,5 @@
 import { store, setStore } from "../index";
-import { updateCurrentUser } from "../authentification";
+import { updateCurrentUser } from "../../old/authentification";
 import SpinningWheel from "../SpinningWheel";
 
 /**
@@ -40,57 +40,62 @@ const LoginButton = () => {
   };
 
   return (
-    <Show
-      when={store.isInitialising}
-      fallback={
-        <Show
-          when={store.isSignedIn}
-          fallback={
-            <Show
-              when={store.isLogging}
-              fallback={
-                <button
-                  class="btn"
-                  onClick={handleAuthClick}
-                  disabled={store.isLogging}
-                >
-                  Login
-                </button>
-              }
-            >
-              <button
-                class="btn"
-                onClick={handleAuthClick}
-                disabled={store.isLogging}
-              >
-                <BigSpinningWheel />
-              </button>
-            </Show>
-          }
-        >
-          <button
-            class="btn"
-            onClick={handleSignoutClick}
-            disabled={store.isLogging}
-          >
-            <img
-              class="avatar"
-              src={store.userAvatarUrl + "?access_token=" + store.userToken}
-              style="height:30px;margin-right:10px;"
-            ></img>
-            {store.userFullName}
-          </button>
-        </Show>
-      }
-    >
-      <button
-        class="btn"
-        onClick={handleAuthClick}
-        disabled={store.isInitialising}
-      >
-        <BigSpinningWheel />
-      </button>
-    </Show>
+    // <Show
+    //   when={store.isInitialising}
+    //   fallback={
+    //     <Show
+    //       when={store.isSignedIn}
+    //       fallback={
+    //         <Show
+    //           when={store.isLogging}
+    //           fallback={
+    //             <button
+    //               class="btn"
+    //               onClick={handleAuthClick}
+    //               disabled={store.isLogging}
+    //             >
+    //               Login
+    //             </button>
+    //           }
+    //         >
+    //           <button
+    //             class="btn"
+    //             onClick={handleAuthClick}
+    //             disabled={store.isLogging}
+    //           >
+    //             <BigSpinningWheel />
+    //           </button>
+    //         </Show>
+    //       }
+    //     >
+    //       <button
+    //         class="btn"
+    //         onClick={handleSignoutClick}
+    //         disabled={store.isLogging}
+    //       >
+    //         <img
+    //           class="avatar"
+    //           src={store.userAvatarUrl + "?access_token=" + store.userToken}
+    //           style="height:30px;margin-right:10px;"
+    //         ></img>
+    //         {store.userFullName}
+    //       </button>
+    //     </Show>
+    //   }
+    // >
+    //   <button
+    //     class="btn"
+    //     onClick={handleAuthClick}
+    //     disabled={store.isInitialising}
+    //   >
+    //     <BigSpinningWheel />
+    //   </button>
+    // </Show>
+
+    <>
+      <div id="buttonDiv"></div>
+      {/* <div class="g_id_signin"></div> */}
+    </>
   );
 };
 

@@ -1,4 +1,6 @@
-import LoginButton from "./LoginButton";
+// import LoginButton from "./LoginButton";
+
+// TODO : create the RevokeAuthorisationButton
 
 const NavBar = () => {
   return (
@@ -6,9 +8,9 @@ const NavBar = () => {
       <div class="navbar-start">
         <a class="btn btn-ghost normal-case text-xl">GDrive Tree</a>
       </div>
-      <div class="navbar-end">
+      {/* <div class="navbar-end">
         <LoginButton />
-      </div>
+      </div> */}
     </navbar>
   );
 };

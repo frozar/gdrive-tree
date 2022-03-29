@@ -1,3 +1,6 @@
 # dependencies
 node_modules
 .env.local
+
+# draft
+note.txt

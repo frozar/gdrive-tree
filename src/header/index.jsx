@@ -4,12 +4,15 @@ import NavBar from "./NavBar";
 import { store } from "../index";
 import { hiddenClass } from "../globalConstant";
 
+// TODO: deal with credential revocation
+
 const Header = () => {
   let refHeader;
   let timeoutID = null;
 
   createEffect(() => {
-    if (store.isGapiAvailable && store.isSignedIn) {
+    if (store.isInitialised) {
+      // console.log("PASSSSS");
       timeoutID = setTimeout(() => {
         displayTopBar(refHeader, "hide");
         timeoutID = null;
@@ -33,7 +36,7 @@ const Header = () => {
         break;
       }
       case "hide": {
-        if (!(store.isGapiAvailable && store.isSignedIn)) {
+        if (!store.isInitialised) {
           headerElement.classList.remove(hiddenClass);
           mainElement.classList.remove(hiddenClass);
         } else {
