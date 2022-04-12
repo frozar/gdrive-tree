@@ -1,4 +1,4 @@
-import { onMount } from "solid-js";
+import { createSignal, onMount } from "solid-js";
 
 import Tabs from "./Tabs";
 import TreeContainer from "./TreeContainer";
@@ -8,17 +8,23 @@ import { hiddenClass } from "../globalConstant";
 const Main = () => {
   const MainContent = ({ initSwitch }) => {
     let refMain;
+
     onMount(() => {
       const headerElement = document.getElementById("topBar");
       const mainElement = refMain;
-      // const hiddenClass = "header--hidden";
 
-      if (headerElement.classList.contains(hiddenClass)) {
-        mainElement.classList.add(hiddenClass);
-      } else {
-        mainElement.classList.remove(hiddenClass);
+      if (headerElement) {
+        if (headerElement.classList.contains(hiddenClass)) {
+          mainElement.classList.add(hiddenClass);
+        } else {
+          mainElement.classList.remove(hiddenClass);
+        }
       }
     });
+
+    const [nodes, setNodes] = createSignal([]);
+    const [isNodesInitialised, setIsNodesInitialised] = createSignal(false);
+    const [isLoading, setIsLoading] = createSignal(false);
 
     return (
       <main
@@ -26,8 +32,24 @@ const Main = () => {
         id="mainContent"
         class="transition-transform custom-transition-duration"
       >
-        <Tabs />
-        <TreeContainer initSwitch={initSwitch} />
+        <Tabs
+          initSwitch={initSwitch}
+          nodes={nodes}
+          setNodes={setNodes}
+          isNodesInitialised={isNodesInitialised}
+          setIsNodesInitialised={setIsNodesInitialised}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+        />
+        <TreeContainer
+          initSwitch={initSwitch}
+          nodes={nodes}
+          setNodes={setNodes}
+          isNodesInitialised={isNodesInitialised}
+          setIsNodesInitialised={setIsNodesInitialised}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+        />
       </main>
     );
   };
