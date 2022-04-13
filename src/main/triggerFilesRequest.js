@@ -175,19 +175,13 @@ async function initEveryNodes() {
 // TODO : manage prompt, when the user close the login connexion gui
 //       for example
 
-export function triggerFilesRequest(
-  initSwitch,
-  nodes,
-  setNodes,
-  setIsNodesInitialised,
-  setIsLoading
-) {
+export function triggerFilesRequest(initSwitch) {
   function dealWithResponse(newNodes) {
-    if (!_.isEqual(nodes(), newNodes)) {
-      setNodes(newNodes);
+    if (!_.isEqual(store.nodes, newNodes)) {
+      setStore("nodes", () => newNodes);
     }
-    setIsNodesInitialised(true);
-    setIsLoading && setIsLoading(false);
+    setStore("isNodesInitialised", () => true);
+    setStore("isLoading", () => false);
   }
 
   function grabFiles(initSwitch) {
@@ -228,7 +222,7 @@ export function triggerFilesRequest(
     callbackBody();
   };
 
-  setIsLoading && setIsLoading(true);
+  setStore("isLoading", () => true);
   // Conditionally ask users to select the Google Account they'd like to use,
   // and explicitly obtain their consent to fetch their Calendar.
   // NOTE: To request an access token a user gesture is necessary.

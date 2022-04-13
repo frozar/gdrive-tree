@@ -32,7 +32,7 @@ const ShowFilesButton = ({
     return <div id="show-files-button-container">{props.children}</div>;
   };
 
-  const isReady = () => !store.isInitialised || isLoading();
+  const isReady = () => !store.isInitialised || store.isLoading;
 
   return (
     <Show
@@ -65,50 +65,28 @@ const ShowFilesButton = ({
   );
 };
 
-const TreeContainer = ({
-  initSwitch,
-  nodes,
-  setNodes,
-  isNodesInitialised,
-  setIsNodesInitialised,
-  isLoading,
-  setIsLoading,
-}) => {
-  const [hasCredenital, setHasCredenital] = createSignal(false);
+const TreeContainer = ({ initSwitch }) => {
+  const [hasCredential, setHasCredential] = createSignal(false);
 
-  // createEffect(() => {
-  //   console.log("TreeContainer nodes()", nodes());
-  // });
   createEffect(() => {
-    // console.log("hasCredenital()", hasCredenital());
-    // console.log("isNodesInitialised()", isNodesInitialised());
     // WARNING: this if to check the isLoading signal is necessary to
     //          trigger the run of this effect when the load is done
-    if (!isLoading()) {
-      // console.log("store.main.isLoading", store.main.isLoading);
-      // if (!store.main.isLoading) {
-      console.info(
-        "File loading from google drive is done (or component has just render)"
-      );
-    }
+    store.isLoading;
     if (store.isInitialised) {
-      setHasCredenital(gapi.client.getToken() !== null);
+      const newHasCredential = gapi.client.getToken() !== null;
+      if (hasCredential() !== newHasCredential) {
+        setHasCredential(newHasCredential);
+      }
     }
   });
 
+  // Create a derived nodes variables
+  const nodes = () => store.nodes;
+
   return (
     <Show
-      when={hasCredenital() && isNodesInitialised() && !isLoading()}
-      fallback={
-        <ShowFilesButton
-          initSwitch={initSwitch}
-          nodes={nodes}
-          setNodes={setNodes}
-          setIsNodesInitialised={setIsNodesInitialised}
-          isLoading={isLoading}
-          setIsLoading={setIsLoading}
-        />
-      }
+      when={hasCredential() && store.isNodesInitialised && !store.isLoading}
+      fallback={<ShowFilesButton initSwitch={initSwitch} />}
     >
       <Tree isRoot={true} nodes={nodes} name={"root"} />
     </Show>

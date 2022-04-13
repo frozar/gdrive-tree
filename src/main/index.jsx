@@ -1,4 +1,4 @@
-import { createSignal, onMount } from "solid-js";
+import { onMount } from "solid-js";
 
 import Tabs from "./Tabs";
 import TreeContainer from "./TreeContainer";
@@ -6,15 +6,7 @@ import { Routes, Route } from "solid-app-router";
 import { hiddenClass } from "../globalConstant";
 
 const Main = () => {
-  const MainContent = ({
-    initSwitch,
-    nodes,
-    setNodes,
-    isNodesInitialised,
-    setIsNodesInitialised,
-    isLoading,
-    setIsLoading,
-  }) => {
+  const MainContent = ({ initSwitch }) => {
     let refMain;
 
     onMount(() => {
@@ -36,62 +28,16 @@ const Main = () => {
         id="mainContent"
         class="transition-transform custom-transition-duration"
       >
-        <Tabs
-          initSwitch={initSwitch}
-          nodes={nodes}
-          setNodes={setNodes}
-          isNodesInitialised={isNodesInitialised}
-          setIsNodesInitialised={setIsNodesInitialised}
-          isLoading={isLoading}
-          setIsLoading={setIsLoading}
-        />
-        <TreeContainer
-          initSwitch={initSwitch}
-          nodes={nodes}
-          setNodes={setNodes}
-          isNodesInitialised={isNodesInitialised}
-          setIsNodesInitialised={setIsNodesInitialised}
-          isLoading={isLoading}
-          setIsLoading={setIsLoading}
-        />
+        <Tabs initSwitch={initSwitch} />
+        <TreeContainer initSwitch={initSwitch} />
       </main>
     );
   };
 
-  const [nodes, setNodes] = createSignal([]);
-  const [isNodesInitialised, setIsNodesInitialised] = createSignal(false);
-  const [isLoading, setIsLoading] = createSignal(false);
-
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <MainContent
-            initSwitch="drive"
-            nodes={nodes}
-            setNodes={setNodes}
-            isNodesInitialised={isNodesInitialised}
-            setIsNodesInitialised={setIsNodesInitialised}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-          />
-        }
-      />
-      <Route
-        path="/shared"
-        element={
-          <MainContent
-            initSwitch="shared"
-            nodes={nodes}
-            setNodes={setNodes}
-            isNodesInitialised={isNodesInitialised}
-            setIsNodesInitialised={setIsNodesInitialised}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-          />
-        }
-      />
+      <Route path="/" element={<MainContent initSwitch="drive" />} />
+      <Route path="/shared" element={<MainContent initSwitch="shared" />} />
     </Routes>
   );
 };

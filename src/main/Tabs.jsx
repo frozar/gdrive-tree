@@ -4,24 +4,10 @@ import { onMount } from "solid-js";
 import { store } from "../index";
 import { triggerFilesRequest } from "./triggerFilesRequest";
 
-const Tabs = ({
-  initSwitch,
-  nodes,
-  setNodes,
-  isNodesInitialised,
-  setIsNodesInitialised,
-  isLoading,
-  setIsLoading,
-}) => {
+const Tabs = ({ initSwitch }) => {
   onMount(() => {
     if (store.isInitialised) {
-      triggerFilesRequest(
-        initSwitch,
-        nodes,
-        setNodes,
-        setIsNodesInitialised,
-        setIsLoading
-      );
+      triggerFilesRequest(initSwitch);
     }
   });
 

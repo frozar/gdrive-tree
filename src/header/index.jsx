@@ -57,12 +57,10 @@ const Header = () => {
       ref={refHeader}
       onMouseEnter={(event) => {
         const headerElement = event.currentTarget;
-        // showTopBar(headerElement);
         displayTopBar(headerElement, "show");
       }}
       onMouseLeave={(event) => {
         const headerElement = event.currentTarget;
-        // hideTopBar(headerElement);
         displayTopBar(headerElement, "hide");
       }}
       class="fixed w-full left-0 top-0 z-10 transition-transform custom-transition-duration"
