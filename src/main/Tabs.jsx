@@ -6,7 +6,7 @@ import { triggerFilesRequest } from "./triggerFilesRequest";
 
 const Tabs = ({ initSwitch }) => {
   onMount(() => {
-    if (store.isInitialised) {
+    if (store.isExternalLibLoaded) {
       triggerFilesRequest(initSwitch);
     }
   });

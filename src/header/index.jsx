@@ -11,7 +11,7 @@ const Header = () => {
   let timeoutID = null;
 
   createEffect(() => {
-    if (store.isInitialised) {
+    if (store.isExternalLibLoaded) {
       timeoutID = setTimeout(() => {
         displayTopBar(refHeader, "hide");
         timeoutID = null;
@@ -35,7 +35,7 @@ const Header = () => {
         break;
       }
       case "hide": {
-        if (!store.isInitialised) {
+        if (!store.isExternalLibLoaded) {
           headerElement.classList.remove(hiddenClass);
           mainElement.classList.remove(hiddenClass);
         } else {

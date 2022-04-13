@@ -177,11 +177,11 @@ async function initEveryNodes() {
 
 export function triggerFilesRequest(initSwitch) {
   function dealWithResponse(newNodes) {
-    if (!_.isEqual(store.nodes, newNodes)) {
-      setStore("nodes", () => newNodes);
+    if (!_.isEqual(store.rootNodes, newNodes)) {
+      setStore("rootNodes", () => newNodes);
     }
-    setStore("isNodesInitialised", () => true);
-    setStore("isLoading", () => false);
+    setStore("isRootNodesInitialised", () => true);
+    setStore("isRootNodesLoading", () => false);
   }
 
   function grabFiles(initSwitch) {
@@ -222,7 +222,7 @@ export function triggerFilesRequest(initSwitch) {
     callbackBody();
   };
 
-  setStore("isLoading", () => true);
+  setStore("isRootNodesLoading", () => true);
   // Conditionally ask users to select the Google Account they'd like to use,
   // and explicitly obtain their consent to fetch their Calendar.
   // NOTE: To request an access token a user gesture is necessary.
