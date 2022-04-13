@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { produce } from "solid-js/store";
 
 import { tokenClient } from "../init";
 import { store, setStore } from "../index";
@@ -177,11 +176,14 @@ async function initEveryNodes() {
 
 export function triggerFilesRequest(initSwitch) {
   function dealWithResponse(newNodes) {
-    if (!_.isEqual(store.rootNodes, newNodes)) {
-      setStore("rootNodes", () => newNodes);
+    if (!_.isEqual(store.rootNodes.content, newNodes)) {
+      setStore("rootNodes", (current) => ({ ...current, content: newNodes }));
     }
-    setStore("isRootNodesInitialised", () => true);
-    setStore("isRootNodesLoading", () => false);
+    setStore("rootNodes", (current) => ({
+      ...current,
+      isInitialised: true,
+      isLoading: false,
+    }));
   }
 
   function grabFiles(initSwitch) {
@@ -222,7 +224,7 @@ export function triggerFilesRequest(initSwitch) {
     callbackBody();
   };
 
-  setStore("isRootNodesLoading", () => true);
+  setStore("rootNodes", (current) => ({ ...current, isLoading: true }));
   // Conditionally ask users to select the Google Account they'd like to use,
   // and explicitly obtain their consent to fetch their Calendar.
   // NOTE: To request an access token a user gesture is necessary.
