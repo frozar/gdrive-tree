@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { produce } from "solid-js/store";
 
 import { tokenClient } from "../init";
 import { store, setStore } from "../index";
@@ -172,19 +171,19 @@ async function initEveryNodes() {
   return await getSortedEveryNodes(999, "*");
 }
 
-export function triggerFilesRequest(
-  initSwitch,
-  nodes,
-  setNodes,
-  setIsNodesInitialised,
-  setIsLoading
-) {
+// TODO : manage prompt, when the user close the login connexion gui
+//       for example
+
+export function triggerFilesRequest(initSwitch) {
   function dealWithResponse(newNodes) {
-    if (!_.isEqual(nodes(), newNodes)) {
-      setNodes(newNodes);
+    if (!_.isEqual(store.rootNodes.content, newNodes)) {
+      setStore("rootNodes", (current) => ({ ...current, content: newNodes }));
     }
-    setIsNodesInitialised(true);
-    setIsLoading && setIsLoading(false);
+    setStore("rootNodes", (current) => ({
+      ...current,
+      isInitialised: true,
+      isLoading: false,
+    }));
   }
 
   function grabFiles(initSwitch) {
@@ -203,22 +202,29 @@ export function triggerFilesRequest(
     }
   }
 
+  function callbackBody() {
+    grabFiles(initSwitch)
+      .then(dealWithResponse)
+      .catch((err) => {
+        console.error(err);
+        tokenClient.requestAccessToken({ prompt: "" });
+      });
+  }
+
   tokenClient.callback = (resp) => {
     if (resp.error !== undefined) {
       throw resp;
     }
 
-    setIsLoading && setIsLoading(true);
     // GIS has automatically updated gapi.client with the newly issued access token.
     // console.log(
     //   "gapi.client access token: " + JSON.stringify(gapi.client.getToken())
     // );
 
-    grabFiles(initSwitch)
-      .then(dealWithResponse)
-      .catch((err) => console.error(err));
+    callbackBody();
   };
 
+  setStore("rootNodes", (current) => ({ ...current, isLoading: true }));
   // Conditionally ask users to select the Google Account they'd like to use,
   // and explicitly obtain their consent to fetch their Calendar.
   // NOTE: To request an access token a user gesture is necessary.
@@ -228,6 +234,7 @@ export function triggerFilesRequest(
     tokenClient.requestAccessToken({ prompt: "consent" });
   } else {
     // Skip display of account chooser and consent dialog for an existing session.
-    tokenClient.requestAccessToken({ prompt: "" });
+    // tokenClient.requestAccessToken({ prompt: "" });
+    callbackBody();
   }
 }

@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #app {
+  height: 100%;
+}
+
 /* Spinning wheel */
 .lds-hourglass {
   display: inline-block;
@@ -53,12 +57,6 @@
 /* Disappearing Nav Bar */
 body {
   --nav-height: 3rem;
-}
-
-/* min-height: 100vh; */
-main {
-  padding-top: calc(4.5rem);
-  height: 100vh;
 }
 
 .top-bar--hidden {
@@ -117,6 +115,15 @@ main {
   transition-timing-function: ease-in-out;
 }
 
+/* min-height: 100vh; */
+/* height: 100vh; */
+main {
+  padding-top: calc(4.5rem);
+  height: 100%;
+}
+
+/* height: calc(100% - 2rem);
+min-height: calc(100% - 2rem); */
 #show-files-button-container {
   display: flex;
   justify-content: center;

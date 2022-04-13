@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from "solid-js";
+import { createSignal, createEffect, onMount } from "solid-js";
 import Node from "./Node";
 
 const Tree = (props) => {
@@ -8,6 +8,17 @@ const Tree = (props) => {
 
   let treeContainerRef;
   let treeRef;
+
+  onMount(() => {
+    const htmlElement = document.getElementsByTagName("html")[0];
+    const bodyElement = document.getElementsByTagName("body")[0];
+    const appElement = document.getElementById("app");
+    const mainElement = document.getElementById("mainContent");
+    htmlElement.style.height = "unset";
+    bodyElement.style.height = "unset";
+    appElement.style.height = "unset";
+    mainElement.style.height = "unset";
+  });
 
   // Update the height signal of this Tree component
   // When the Tree is expanded, the height is updated in two cases:

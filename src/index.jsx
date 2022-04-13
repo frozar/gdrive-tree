@@ -6,8 +6,13 @@ import "./index.css";
 import "./init";
 import App from "./App";
 
-export const defaultStore = {
-  isInitialised: false,
+const defaultStore = {
+  isExternalLibLoaded: false,
+  rootNodes: {
+    content: [],
+    isInitialised: false,
+    isLoading: false,
+  },
 };
 
 export const [store, setStore] = createStore(defaultStore);

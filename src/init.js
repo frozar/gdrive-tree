@@ -12,7 +12,7 @@ let gisInited;
 
 function checkBeforeStart() {
   if (gapiInited && gisInited) {
-    setStore("isInitialised", () => true);
+    setStore("isExternalLibLoaded", () => true);
   }
 }
 

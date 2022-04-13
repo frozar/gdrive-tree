@@ -1,4 +1,4 @@
-import { createSignal, onMount } from "solid-js";
+import { onMount } from "solid-js";
 
 import Tabs from "./Tabs";
 import TreeContainer from "./TreeContainer";
@@ -22,34 +22,14 @@ const Main = () => {
       }
     });
 
-    const [nodes, setNodes] = createSignal([]);
-    const [isNodesInitialised, setIsNodesInitialised] = createSignal(false);
-    const [isLoading, setIsLoading] = createSignal(false);
-
     return (
       <main
         ref={refMain}
         id="mainContent"
         class="transition-transform custom-transition-duration"
       >
-        <Tabs
-          initSwitch={initSwitch}
-          nodes={nodes}
-          setNodes={setNodes}
-          isNodesInitialised={isNodesInitialised}
-          setIsNodesInitialised={setIsNodesInitialised}
-          isLoading={isLoading}
-          setIsLoading={setIsLoading}
-        />
-        <TreeContainer
-          initSwitch={initSwitch}
-          nodes={nodes}
-          setNodes={setNodes}
-          isNodesInitialised={isNodesInitialised}
-          setIsNodesInitialised={setIsNodesInitialised}
-          isLoading={isLoading}
-          setIsLoading={setIsLoading}
-        />
+        <Tabs initSwitch={initSwitch} />
+        <TreeContainer initSwitch={initSwitch} />
       </main>
     );
   };

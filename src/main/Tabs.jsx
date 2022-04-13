@@ -1,16 +1,16 @@
 import { NavLink } from "solid-app-router";
+import { onMount } from "solid-js";
 
+import { store } from "../index";
 import { triggerFilesRequest } from "./triggerFilesRequest";
 
-const Tabs = ({
-  initSwitch,
-  nodes,
-  setNodes,
-  isNodesInitialised,
-  setIsNodesInitialised,
-  isLoading,
-  setIsLoading,
-}) => {
+const Tabs = ({ initSwitch }) => {
+  onMount(() => {
+    if (store.isExternalLibLoaded) {
+      triggerFilesRequest(initSwitch);
+    }
+  });
+
   const tabs = [
     { path: "/", label: "My Drive" },
     { path: "/shared", label: "Shared with me" },
@@ -25,16 +25,6 @@ const Tabs = ({
             activeClass="tab-active"
             class="tab tab-lifted"
             end
-            onclick={() => {
-              console.log("tab.label", tab.label);
-              triggerFilesRequest(
-                initSwitch,
-                nodes,
-                setNodes,
-                setIsNodesInitialised,
-                setIsLoading
-              );
-            }}
           >
             {tab.label}
           </NavLink>
