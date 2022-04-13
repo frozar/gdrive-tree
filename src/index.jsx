@@ -8,6 +8,9 @@ import App from "./App";
 
 export const defaultStore = {
   isInitialised: false,
+  // nodes: [],
+  // isNodesInitialised: false,
+  // isLoading: false,
 };
 
 export const [store, setStore] = createStore(defaultStore);

@@ -1,4 +1,4 @@
-import { createSignal, createEffect, Show } from "solid-js";
+import { createSignal, createEffect, Show, onMount } from "solid-js";
 
 import { store, setStore } from "../index";
 import Tree from "./tree";
@@ -13,6 +13,17 @@ const ShowFilesButton = ({
   isLoading,
   setIsLoading,
 }) => {
+  onMount(() => {
+    const htmlElement = document.getElementsByTagName("html")[0];
+    const bodyElement = document.getElementsByTagName("body")[0];
+    const appElement = document.getElementById("app");
+    const mainElement = document.getElementById("mainContent");
+    htmlElement.style.height = "100%";
+    bodyElement.style.height = "100%";
+    appElement.style.height = "100%";
+    mainElement.style.height = "100%";
+  });
+
   const BigSpinningWheel = () => {
     return <SpinningWheel size="big" />;
   };
@@ -63,11 +74,11 @@ const TreeContainer = ({
   isLoading,
   setIsLoading,
 }) => {
-  // const [nodes, setNodes] = createSignal([]);
-  // const [isNodesInitialised, setIsNodesInitialised] = createSignal(false);
-  // const [isLoading, setIsLoading] = createSignal(false);
   const [hasCredenital, setHasCredenital] = createSignal(false);
 
+  // createEffect(() => {
+  //   console.log("TreeContainer nodes()", nodes());
+  // });
   createEffect(() => {
     // console.log("hasCredenital()", hasCredenital());
     // console.log("isNodesInitialised()", isNodesInitialised());
@@ -87,7 +98,7 @@ const TreeContainer = ({
 
   return (
     <Show
-      when={hasCredenital() && isNodesInitialised()}
+      when={hasCredenital() && isNodesInitialised() && !isLoading()}
       fallback={
         <ShowFilesButton
           initSwitch={initSwitch}

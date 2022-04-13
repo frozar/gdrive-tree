@@ -6,7 +6,15 @@ import { Routes, Route } from "solid-app-router";
 import { hiddenClass } from "../globalConstant";
 
 const Main = () => {
-  const MainContent = ({ initSwitch }) => {
+  const MainContent = ({
+    initSwitch,
+    nodes,
+    setNodes,
+    isNodesInitialised,
+    setIsNodesInitialised,
+    isLoading,
+    setIsLoading,
+  }) => {
     let refMain;
 
     onMount(() => {
@@ -21,10 +29,6 @@ const Main = () => {
         }
       }
     });
-
-    const [nodes, setNodes] = createSignal([]);
-    const [isNodesInitialised, setIsNodesInitialised] = createSignal(false);
-    const [isLoading, setIsLoading] = createSignal(false);
 
     return (
       <main
@@ -54,10 +58,40 @@ const Main = () => {
     );
   };
 
+  const [nodes, setNodes] = createSignal([]);
+  const [isNodesInitialised, setIsNodesInitialised] = createSignal(false);
+  const [isLoading, setIsLoading] = createSignal(false);
+
   return (
     <Routes>
-      <Route path="/" element={<MainContent initSwitch="drive" />} />
-      <Route path="/shared" element={<MainContent initSwitch="shared" />} />
+      <Route
+        path="/"
+        element={
+          <MainContent
+            initSwitch="drive"
+            nodes={nodes}
+            setNodes={setNodes}
+            isNodesInitialised={isNodesInitialised}
+            setIsNodesInitialised={setIsNodesInitialised}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
+        }
+      />
+      <Route
+        path="/shared"
+        element={
+          <MainContent
+            initSwitch="shared"
+            nodes={nodes}
+            setNodes={setNodes}
+            isNodesInitialised={isNodesInitialised}
+            setIsNodesInitialised={setIsNodesInitialised}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
+        }
+      />
     </Routes>
   );
 };
