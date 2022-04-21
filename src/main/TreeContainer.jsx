@@ -1,8 +1,9 @@
 import { createSignal, createEffect, Show, onMount } from "solid-js";
 
-import { store } from "../index";
+import { store, setStore } from "../index";
 import Tree from "./tree";
 import SpinningWheel from "../SpinningWheel";
+import { checkHasCredential } from "../checkHasCredential";
 import { triggerFilesRequest } from "./triggerFilesRequest";
 
 const ShowFilesButton = ({ initSwitch }) => {
@@ -48,19 +49,7 @@ const ShowFilesButton = ({ initSwitch }) => {
 };
 
 const TreeContainer = ({ initSwitch }) => {
-  const [hasCredential, setHasCredential] = createSignal(false);
-
-  createEffect(() => {
-    // WARNING: this if to check the store.rootNodes.isLoading signal is necessary to
-    //          trigger the run of this effect when the load is done
-    store.rootNodes.isLoading;
-    if (store.isExternalLibLoaded) {
-      const newHasCredential = gapi.client.getToken() !== null;
-      if (hasCredential() !== newHasCredential) {
-        setHasCredential(newHasCredential);
-      }
-    }
-  });
+  createEffect(checkHasCredential);
 
   // Create a derived nodes variables
   const nodes = () => store.rootNodes.content;
@@ -68,7 +57,7 @@ const TreeContainer = ({ initSwitch }) => {
   return (
     <Show
       when={
-        hasCredential() &&
+        store.hasCredential &&
         store.rootNodes.isInitialised &&
         !store.rootNodes.isLoading
       }

@@ -8,8 +8,6 @@ import { store, setStore } from "../index";
  */
 const nodesCache = {};
 
-let rootNodeId;
-
 function buildFilesListArg(args) {
   const result = {};
 
@@ -44,28 +42,101 @@ function buildFilesListArg(args) {
   return result;
 }
 
-async function gFilesList(args) {
-  return await gapi.client.drive.files.list(buildFilesListArg(args));
+function gFilesList(listOptions) {
+  return gapi.client.drive.files.list(buildFilesListArg(listOptions));
 }
 
 async function loopRequest(listOptions) {
-  const result = [];
-  let nextPageToken;
-  do {
-    let response = await gFilesList({
-      ...listOptions,
-      pageToken: nextPageToken,
-    });
-    nextPageToken = response.result.nextPageToken;
-    if (response.result.files.length <= 0) {
-      break;
-    }
-    for (const file of response.result.files) {
-      result.push(file);
-    }
-  } while (nextPageToken);
+  /**
+   * Make as many requests that are necessary to retrieve the content of
+   * a folder.
+   *
+   * @param {object} listOptions : necessary to build the request to google
+   * @returns Array of files
+   */
+  async function grabFiles(listOptions) {
+    const result = [];
+    let nextPageToken;
+    do {
+      const response = await gFilesList({
+        ...listOptions,
+        pageToken: nextPageToken,
+      });
 
-  return result;
+      nextPageToken = response.result.nextPageToken;
+      if (response.result.files.length <= 0) {
+        nextPageToken = null;
+        break;
+      }
+      for (const file of response.result.files) {
+        result.push(file);
+      }
+    } while (nextPageToken);
+    return result;
+  }
+
+  /**
+   * Make a request for a new token
+   *
+   * @param {string} promptStr
+   * @returns A promise
+   */
+  function getToken(promptStr) {
+    return new Promise((resolve, reject) => {
+      try {
+        // Deal with the response for a new token
+        tokenClient.callback = (resp) => {
+          if (resp.error !== undefined) {
+            // setStore("isAuthorized", () => false);
+            reject(resp);
+          }
+          // setStore("isAuthorized", () => true);
+          resolve(resp);
+        };
+        // Ask for a new token
+        tokenClient.requestAccessToken({
+          prompt: promptStr,
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      const result = await grabFiles(listOptions);
+      resolve(result);
+    } catch (err) {
+      console.info("First call to google API failed.");
+      console.info(err);
+      if (gapi.client.getToken() === null) {
+        console.info("Ask consentment");
+        getToken("consent")
+          .then(async (resp) => {
+            const result = await grabFiles(listOptions);
+            resolve(result);
+          })
+          .catch((err) => {
+            console.error("Cannot call google API.");
+            console.error(err);
+            reject(err);
+          });
+      } else {
+        console.info("Renew consentment");
+        getToken("")
+          .then(async (resp) => {
+            const result = await grabFiles(listOptions);
+            resolve(result);
+          })
+          .catch((err) => {
+            console.error("Cannot call google API.");
+            console.error(err);
+            reject(err);
+          });
+      }
+    }
+  });
 }
 
 function sortNodesDirectoryFirst(node0, node1) {
@@ -156,11 +227,7 @@ async function getSortedSharedNodes(pageSize, fields) {
 }
 
 async function initNodesFromRoot() {
-  const nodes = await getSortedNodesFromDirectory(999, "*", "root");
-  if (0 < nodes.length) {
-    rootNodeId = nodes[0].parents[0];
-  }
-  return nodes;
+  return await getSortedNodesFromDirectory(999, "*", "root");
 }
 
 async function initSharedNodes() {
@@ -174,18 +241,7 @@ async function initEveryNodes() {
 // TODO : manage prompt, when the user close the login connexion gui
 //       for example
 
-export function triggerFilesRequest(initSwitch) {
-  function dealWithResponse(newNodes) {
-    if (!_.isEqual(store.rootNodes.content, newNodes)) {
-      setStore("rootNodes", (current) => ({ ...current, content: newNodes }));
-    }
-    setStore("rootNodes", (current) => ({
-      ...current,
-      isInitialised: true,
-      isLoading: false,
-    }));
-  }
-
+export async function triggerFilesRequest(initSwitch) {
   function grabFiles(initSwitch) {
     switch (initSwitch) {
       case "drive":
@@ -202,39 +258,17 @@ export function triggerFilesRequest(initSwitch) {
     }
   }
 
-  function callbackBody() {
-    grabFiles(initSwitch)
-      .then(dealWithResponse)
-      .catch((err) => {
-        console.error(err);
-        tokenClient.requestAccessToken({ prompt: "" });
-      });
-  }
-
-  tokenClient.callback = (resp) => {
-    if (resp.error !== undefined) {
-      throw resp;
-    }
-
-    // GIS has automatically updated gapi.client with the newly issued access token.
-    // console.log(
-    //   "gapi.client access token: " + JSON.stringify(gapi.client.getToken())
-    // );
-
-    callbackBody();
-  };
-
   setStore("rootNodes", (current) => ({ ...current, isLoading: true }));
-  // Conditionally ask users to select the Google Account they'd like to use,
-  // and explicitly obtain their consent to fetch their Calendar.
-  // NOTE: To request an access token a user gesture is necessary.
-  if (gapi.client.getToken() === null) {
-    // Prompt the user to select an Google Account and asked for consent to share their data
-    // when establishing a new session.
-    tokenClient.requestAccessToken({ prompt: "consent" });
-  } else {
-    // Skip display of account chooser and consent dialog for an existing session.
-    // tokenClient.requestAccessToken({ prompt: "" });
-    callbackBody();
+
+  let newNodes = await grabFiles(initSwitch);
+  console.log("newNodes", newNodes);
+
+  if (!_.isEqual(store.rootNodes.content, newNodes)) {
+    setStore("rootNodes", (current) => ({ ...current, content: newNodes }));
   }
+  setStore("rootNodes", (current) => ({
+    ...current,
+    isInitialised: true,
+    isLoading: false,
+  }));
 }
