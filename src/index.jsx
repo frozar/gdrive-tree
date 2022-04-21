@@ -8,6 +8,8 @@ import App from "./App";
 
 const defaultStore = {
   isExternalLibLoaded: false,
+  // isAuthorized: false,
+  hasCredential: false,
   rootNodes: {
     content: [],
     isInitialised: false,

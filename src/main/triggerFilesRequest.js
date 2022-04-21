@@ -87,8 +87,10 @@ async function loopRequest(listOptions) {
         // Deal with the response for a new token
         tokenClient.callback = (resp) => {
           if (resp.error !== undefined) {
+            // setStore("isAuthorized", () => false);
             reject(resp);
           }
+          // setStore("isAuthorized", () => true);
           resolve(resp);
         };
         // Ask for a new token
