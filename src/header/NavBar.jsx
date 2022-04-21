@@ -11,7 +11,7 @@ const NavBar = () => {
   createEffect(() => {
     console.log("NavBar store.isAuthorized", store.hasCredential);
     if (store.hasCredential) {
-      setButtonStyle(() => "btn-accsecondaryent");
+      setButtonStyle(() => "btn-secondary");
     } else {
       setButtonStyle(() => "btn-disabled");
     }
