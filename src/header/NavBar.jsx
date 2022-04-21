@@ -18,8 +18,6 @@ const NavBar = () => {
   });
 
   function handleClick() {
-    console.log("click");
-    console.log("gapi.client.getToken()", gapi.client.getToken().access_token);
     google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () =>
       setStore("hasCredential", () => false)
     );
