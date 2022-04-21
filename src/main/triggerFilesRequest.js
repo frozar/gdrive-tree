@@ -92,7 +92,9 @@ async function loopRequest(listOptions) {
           resolve(resp);
         };
         // Ask for a new token
-        tokenClient.requestAccessToken({ prompt: promptStr });
+        tokenClient.requestAccessToken({
+          prompt: promptStr,
+        });
       } catch (err) {
         reject(err);
       }
@@ -257,6 +259,7 @@ export async function triggerFilesRequest(initSwitch) {
   setStore("rootNodes", (current) => ({ ...current, isLoading: true }));
 
   let newNodes = await grabFiles(initSwitch);
+  console.log("newNodes", newNodes);
 
   if (!_.isEqual(store.rootNodes.content, newNodes)) {
     setStore("rootNodes", (current) => ({ ...current, content: newNodes }));

@@ -3,9 +3,6 @@
 
 import { setStore } from "./index";
 
-// document.getElementById("showEventsBtn").style.visibility = "hidden";
-// document.getElementById("revokeBtn").style.visibility = "hidden";
-
 export let tokenClient;
 let gapiInited;
 let gisInited;
@@ -18,11 +15,8 @@ function checkBeforeStart() {
 
 function gapiInit() {
   gapi.client
-    .init({
-      // NOTE: OAuth2 'scope' and 'client_id' parameters have moved to initTokenClient().
-    })
+    .init({})
     .then(function () {
-      // Load the Drive API discovery document.
       gapi.client.load(
         "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
       );
@@ -46,10 +40,9 @@ function gisInit() {
     client_id: import.meta.env.VITE_CLIENT_ID,
     scope: SCOPES,
     prompt: "consent",
-    callback: "", // defined at request time in await/promise scope.
+    callback: "",
+    ux_mode: "popup",
   });
-
-  // console.log("tokenClient", tokenClient);
 
   gisInited = true;
   checkBeforeStart();
@@ -76,6 +69,3 @@ triggerLoadScript("https://apis.google.com/js/api.js", gapiLoad, () =>
 triggerLoadScript("https://accounts.google.com/gsi/client", gisInit, () =>
   console.error("Cannot load GIS lib")
 );
-
-// window.onload = function () {
-// };
