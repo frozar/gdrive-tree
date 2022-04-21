@@ -28,11 +28,11 @@ const NavBar = () => {
   return (
     <navbar class="navbar bg-base-100 mb-2 shadow-xl">
       <div class="navbar-start">
-        <a class="btn btn-ghost normal-case text-xl">GDrive Tree</a>
+        <a class="normal-case text-xl">GDrive Tree</a>
       </div>
       <div class="navbar-end">
         <span
-          class={`btn ${buttonStyle()} normal-case text-xl`}
+          class={`btn ${buttonStyle()} normal-case text-sm`}
           onClick={handleClick}
         >
           Revoke authorisation
