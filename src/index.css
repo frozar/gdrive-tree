@@ -78,6 +78,13 @@ body {
 .selectable {
   cursor: pointer;
   user-select: none;
+  border-radius: 0.4rem;
+  transition: font-size 0.150s ease-in, background-color 0.150s ease-in;
+}
+
+.selectable:focus {
+  font-size: 1.2rem;
+  background-color: #cbddfb;
 }
 
 .file {
