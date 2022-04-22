@@ -1,5 +1,3 @@
-import { createSignal } from "solid-js";
-
 import File from "./File";
 import Folder from "./Folder";
 
