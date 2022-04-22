@@ -1,23 +1,117 @@
-import { createSignal, createEffect, onMount } from "solid-js";
+import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
+import { tabbable } from "tabbable";
+
 import Node from "./Node";
 
 const Tree = (props) => {
-  const { nodes, isRoot, isExpanded, setParentHeight, name } = props;
+  const { nodes, isRoot, isExpanded, setParentHeight } = props;
 
   const [height, setHeight] = createSignal({ value: 0, overwrite: false });
 
   let treeContainerRef;
   let treeRef;
 
+  function handleKeyDown(event) {
+    if (event.code === "Tab") {
+      event.preventDefault();
+      const resTabbable = tabbable(treeContainerRef);
+      const indexTabbableElement = resTabbable.indexOf(document.activeElement);
+
+      if (indexTabbableElement === -1) {
+        return;
+      }
+
+      function findExpandableParentElement(element) {
+        const parentElement = element.parentElement;
+        if (!parentElement) {
+          return null;
+        }
+
+        if (parentElement.dataset.isExpanded !== undefined) {
+          return parentElement;
+        } else {
+          return findExpandableParentElement(parentElement);
+        }
+      }
+
+      function findFoccusableElement(
+        resTabbable,
+        indexTabbableElement,
+        increment
+      ) {
+        const indexNextTabbableElement = (indexTabbableElement + increment).mod(
+          resTabbable.length
+        );
+        const nextTabbableElement = resTabbable[indexNextTabbableElement];
+        const parentElement = findExpandableParentElement(nextTabbableElement);
+
+        if (parentElement === null) {
+          return null;
+        }
+
+        if (parentElement.dataset.isExpanded === "true") {
+          return nextTabbableElement;
+        } else {
+          return findFoccusableElement(
+            resTabbable,
+            indexNextTabbableElement,
+            increment
+          );
+        }
+      }
+
+      function findNextFoccusableElement(resTabbable, indexTabbableElement) {
+        return findFoccusableElement(resTabbable, indexTabbableElement, +1);
+      }
+
+      function findPreviousFoccusableElement(
+        resTabbable,
+        indexTabbableElement
+      ) {
+        return findFoccusableElement(resTabbable, indexTabbableElement, -1);
+      }
+
+      const nextFoccusableElement =
+        event.shiftKey === false
+          ? findNextFoccusableElement(resTabbable, indexTabbableElement)
+          : findPreviousFoccusableElement(resTabbable, indexTabbableElement);
+
+      if (nextFoccusableElement === null) {
+        return;
+      }
+
+      nextFoccusableElement.focus();
+    }
+  }
+
   onMount(() => {
-    const htmlElement = document.getElementsByTagName("html")[0];
-    const bodyElement = document.getElementsByTagName("body")[0];
-    const appElement = document.getElementById("app");
-    const mainElement = document.getElementById("mainContent");
-    htmlElement.style.height = "unset";
-    bodyElement.style.height = "unset";
-    appElement.style.height = "unset";
-    mainElement.style.height = "unset";
+    if (isRoot) {
+      const htmlElement = document.getElementsByTagName("html")[0];
+      const bodyElement = document.getElementsByTagName("body")[0];
+      const appElement = document.getElementById("app");
+      const mainElement = document.getElementById("mainContent");
+      htmlElement.style.height = "unset";
+      bodyElement.style.height = "unset";
+      appElement.style.height = "unset";
+      mainElement.style.height = "unset";
+
+      treeContainerRef.addEventListener("keydown", handleKeyDown);
+      treeRef.style["margin-top"] = "0.5rem";
+    }
+  });
+
+  onCleanup(() => {
+    treeContainerRef.removeEventListener("keydown", handleKeyDown);
+  });
+
+  createEffect(() => {
+    // console.log("BEF treeContainerRef.dataset", treeContainerRef.dataset);
+    if (isRoot) {
+      treeContainerRef.dataset.isExpanded = "true";
+    } else {
+      treeContainerRef.dataset.isExpanded = isExpanded() ? "true" : "false";
+    }
+    // console.log("AFT treeContainerRef.dataset", treeContainerRef.dataset);
   });
 
   // Update the height signal of this Tree component
@@ -97,13 +191,17 @@ const Tree = (props) => {
       >
         <ul>
           <For each={nodes()}>
-            {(node) => (
-              <Node
-                node={node}
-                setHeight={setHeight}
-                isExpanded={isRoot ? () => true : isExpanded}
-              />
-            )}
+            {(node, nodeIndex) => {
+              const mustAutofocus = isRoot && nodeIndex() === 0;
+              return (
+                <Node
+                  node={node}
+                  setHeight={setHeight}
+                  isExpanded={isRoot ? () => true : isExpanded}
+                  mustAutofocus={mustAutofocus}
+                />
+              );
+            }}
           </For>
         </ul>
       </div>

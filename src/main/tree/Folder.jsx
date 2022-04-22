@@ -48,8 +48,7 @@ async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
   }
 }
 
-const Folder = (props) => {
-  const { node, setParentHeight, isParentExpanded } = props;
+const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
   const { id, name } = node;
 
   const [isExpanded, setIsExpanded] = createSignal(false);
@@ -82,6 +81,7 @@ const Folder = (props) => {
         <span
           class="selectable"
           tabindex="0"
+          autofocus={mustAutofocus}
           onClick={(e) => {
             // Handle only double click
             if (e.detail === 2) {

@@ -124,7 +124,7 @@ async function loopRequest(listOptions) {
           });
       } else {
         console.info("Renew consentment");
-        getToken("")
+        getToken("consent")
           .then(async (resp) => {
             const result = await grabFiles(listOptions);
             resolve(result);

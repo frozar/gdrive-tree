@@ -1,10 +1,10 @@
-const File = (props) => {
-  const { node } = props;
+const File = ({ node, mustAutofocus }) => {
   return (
     <li id={node.id} class="py-1">
       <span
         class="selectable file"
         tabindex="0"
+        autofocus={mustAutofocus}
         onClick={(e) => {
           // Handle only double click
           if (e.detail === 2) {

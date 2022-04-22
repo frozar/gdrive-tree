@@ -69,3 +69,11 @@ triggerLoadScript("https://apis.google.com/js/api.js", gapiLoad, () =>
 triggerLoadScript("https://accounts.google.com/gsi/client", gisInit, () =>
   console.error("Cannot load GIS lib")
 );
+
+window.onload = function () {
+  // Provide a 'mod' function which compute correctly the modulo
+  // operation over negative numbers
+  Number.prototype.mod = function (n) {
+    return ((this % n) + n) % n;
+  };
+};
