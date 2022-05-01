@@ -1,5 +1,6 @@
 import _ from "lodash";
 
+import { getRicherNodes, isFolder } from "./tree/node";
 import { tokenClient } from "../init";
 import { store, setStore } from "../index";
 
@@ -160,10 +161,6 @@ async function higherGetSortedNodes(
   return nodes;
 }
 
-function isFolder(node) {
-  return node.mimeType === "application/vnd.google-apps.folder";
-}
-
 const folderIdDict = {};
 
 function addFolderId(folderId) {
@@ -238,9 +235,6 @@ async function initEveryNodes() {
   return await getSortedEveryNodes(999, "*");
 }
 
-// TODO : manage prompt, when the user close the login connexion gui
-//       for example
-
 export async function triggerFilesRequest(initSwitch) {
   function grabFiles(initSwitch) {
     switch (initSwitch) {
@@ -258,17 +252,23 @@ export async function triggerFilesRequest(initSwitch) {
     }
   }
 
-  setStore("rootNodes", (current) => ({ ...current, isLoading: true }));
+  setStore("nodes", (current) => ({ ...current, isLoading: true }));
 
   let newNodes = await grabFiles(initSwitch);
-  console.log("newNodes", newNodes);
 
-  if (!_.isEqual(store.rootNodes.content, newNodes)) {
-    setStore("rootNodes", (current) => ({ ...current, content: newNodes }));
+  const richerNodes = getRicherNodes(newNodes);
+  if (!_.isEqual(store.nodes.rootNode.subNodes, richerNodes)) {
+    setStore("nodes", (current) => ({
+      ...current,
+      isInitialised: true,
+      isLoading: false,
+      rootNode: { ...current.rootNode, subNodes: richerNodes },
+    }));
+  } else {
+    setStore("nodes", (current) => ({
+      ...current,
+      isInitialised: true,
+      isLoading: false,
+    }));
   }
-  setStore("rootNodes", (current) => ({
-    ...current,
-    isInitialised: true,
-    isLoading: false,
-  }));
 }

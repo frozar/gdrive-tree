@@ -1,9 +1,13 @@
 import { createSignal, createEffect } from "solid-js";
+import { produce } from "solid-js/store";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
 import Tree from "./index";
+import { setNodeById, getNodeById, getRicherNodes } from "./node";
 import SpinningWheel from "../../SpinningWheel";
+import { store, setStore } from "../../index";
 
+// TODO: use solidjs-icon librairy
 const ArrowIcon = (props) => {
   const { isExpanded, setIsExpanded, toggleExpanded } = props;
 
@@ -39,7 +43,17 @@ async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
     try {
       setFetchState("running");
       const nodes = await getSortedNodesFromDirectory(999, "*", id);
-      setSubNodes(nodes);
+      const richerNodes = getRicherNodes(nodes);
+
+      setStore(
+        produce((s) => {
+          // Find the parent node in the store and set its 'subNodes' field
+          setNodeById(s.nodes.rootNode, id, { subNodes: richerNodes });
+        })
+      );
+
+      let targetNode = getNodeById(store.nodes.rootNode, id);
+      setSubNodes(targetNode.subNodes);
       setFetchState("done");
     } catch (error) {
       console.error(error);
@@ -71,7 +85,7 @@ const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
   });
 
   return (
-    <li id={node.id}>
+    <li id={node.id} data-node-type="folder">
       <span class="folder-surrounding-span">
         <ArrowIcon
           isExpanded={isExpanded}

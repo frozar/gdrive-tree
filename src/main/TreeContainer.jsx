@@ -26,7 +26,7 @@ const ShowFilesButton = ({ initSwitch }) => {
     return <div id="show-files-button-container">{props.children}</div>;
   };
 
-  const isReady = () => !store.isExternalLibLoaded || store.rootNodes.isLoading;
+  const isReady = () => !store.isExternalLibLoaded || store.nodes.isLoading;
 
   return (
     <Show
@@ -52,14 +52,14 @@ const TreeContainer = ({ initSwitch }) => {
   createEffect(checkHasCredential);
 
   // Create a derived nodes variables
-  const nodes = () => store.rootNodes.content;
+  const nodes = () => store.nodes.rootNode.subNodes;
 
   return (
     <Show
       when={
         store.hasCredential &&
-        store.rootNodes.isInitialised &&
-        !store.rootNodes.isLoading
+        store.nodes.isInitialised &&
+        !store.nodes.isLoading
       }
       fallback={<ShowFilesButton initSwitch={initSwitch} />}
     >

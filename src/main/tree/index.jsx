@@ -1,7 +1,11 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
+import { produce } from "solid-js/store";
+
 import { tabbable } from "tabbable";
 
 import Node from "./Node";
+import { getNodeById, setNodeById } from "./node";
+import { store, setStore } from "../../index";
 
 const Tree = (props) => {
   const { nodes, isRoot, isExpanded, setParentHeight } = props;
@@ -11,76 +15,149 @@ const Tree = (props) => {
   let treeContainerRef;
   let treeRef;
 
+  function findParentElementWithPredicat(element, predicat) {
+    const parentElement = element.parentElement;
+    if (!parentElement) {
+      return null;
+    }
+
+    if (predicat(parentElement.dataset)) {
+      return parentElement;
+    } else {
+      return findParentElementWithPredicat(parentElement, predicat);
+    }
+  }
+
+  function findExpandableParentElement(element) {
+    return findParentElementWithPredicat(
+      element,
+      (dataset) => dataset.isExpanded !== undefined
+    );
+  }
+
+  function findNodeTypeParentElement(element) {
+    return findParentElementWithPredicat(
+      element,
+      (dataset) => dataset.nodeType !== undefined
+    );
+  }
+
+  function findFoccusableElement(resTabbable, indexTabbableElement, increment) {
+    const indexNextTabbableElement = (indexTabbableElement + increment).mod(
+      resTabbable.length
+    );
+    const nextTabbableElement = resTabbable[indexNextTabbableElement];
+    const parentElement = findExpandableParentElement(nextTabbableElement);
+
+    if (parentElement === null) {
+      return null;
+    }
+
+    if (parentElement.dataset.isExpanded === "true") {
+      return nextTabbableElement;
+    } else {
+      return findFoccusableElement(
+        resTabbable,
+        indexNextTabbableElement,
+        increment
+      );
+    }
+  }
+
+  // TODO: check if element is visible
+  function getTabbableElement() {
+    return tabbable(treeContainerRef);
+  }
+
+  function findNextFoccusableElement() {
+    const resTabbable = getTabbableElement();
+    const indexTabbableElement = resTabbable.indexOf(document.activeElement);
+    if (indexTabbableElement === -1) {
+      return null;
+    }
+    return findFoccusableElement(resTabbable, indexTabbableElement, +1);
+  }
+
+  function findPreviousFoccusableElement() {
+    const resTabbable = getTabbableElement();
+    const indexTabbableElement = resTabbable.indexOf(document.activeElement);
+    if (indexTabbableElement === -1) {
+      return null;
+    }
+    return findFoccusableElement(resTabbable, indexTabbableElement, -1);
+  }
+
   function handleKeyDown(event) {
     if (event.code === "Tab") {
       event.preventDefault();
-      const resTabbable = tabbable(treeContainerRef);
-      const indexTabbableElement = resTabbable.indexOf(document.activeElement);
-
-      if (indexTabbableElement === -1) {
-        return;
-      }
-
-      function findExpandableParentElement(element) {
-        const parentElement = element.parentElement;
-        if (!parentElement) {
-          return null;
-        }
-
-        if (parentElement.dataset.isExpanded !== undefined) {
-          return parentElement;
-        } else {
-          return findExpandableParentElement(parentElement);
-        }
-      }
-
-      function findFoccusableElement(
-        resTabbable,
-        indexTabbableElement,
-        increment
-      ) {
-        const indexNextTabbableElement = (indexTabbableElement + increment).mod(
-          resTabbable.length
-        );
-        const nextTabbableElement = resTabbable[indexNextTabbableElement];
-        const parentElement = findExpandableParentElement(nextTabbableElement);
-
-        if (parentElement === null) {
-          return null;
-        }
-
-        if (parentElement.dataset.isExpanded === "true") {
-          return nextTabbableElement;
-        } else {
-          return findFoccusableElement(
-            resTabbable,
-            indexNextTabbableElement,
-            increment
-          );
-        }
-      }
-
-      function findNextFoccusableElement(resTabbable, indexTabbableElement) {
-        return findFoccusableElement(resTabbable, indexTabbableElement, +1);
-      }
-
-      function findPreviousFoccusableElement(
-        resTabbable,
-        indexTabbableElement
-      ) {
-        return findFoccusableElement(resTabbable, indexTabbableElement, -1);
-      }
 
       const nextFoccusableElement =
         event.shiftKey === false
-          ? findNextFoccusableElement(resTabbable, indexTabbableElement)
-          : findPreviousFoccusableElement(resTabbable, indexTabbableElement);
+          ? findNextFoccusableElement()
+          : findPreviousFoccusableElement();
 
       if (nextFoccusableElement === null) {
         return;
       }
 
       nextFoccusableElement.focus();
+    }
+
+    if (event.code === "ArrowUp") {
+      event.preventDefault();
+
+      const nextFoccusableElement = findPreviousFoccusableElement();
+
+      if (nextFoccusableElement === null) {
+        return;
+      }
+
+      nextFoccusableElement.focus();
+    }
+
+    if (event.code === "ArrowDown") {
+      event.preventDefault();
+
+      const nextFoccusableElement = findNextFoccusableElement();
+
+      if (nextFoccusableElement === null) {
+        return;
+      }
+
+      nextFoccusableElement.focus();
+    }
+
+    if (event.code === "ArrowRight") {
+      event.preventDefault();
+
+      const elementNodeType = findNodeTypeParentElement(document.activeElement);
+      const nodeType = elementNodeType.dataset.nodeType;
+      console.log(`nodeType [${nodeType}]`);
+
+      const id = elementNodeType.id;
+
+      console.log("id", id);
+
+      if (nodeType === "folder") {
+        const gNode = getNodeById(store.nodes.rootNode, id);
+        console.log("gNode", gNode);
+        if (!gNode.isExpanded) {
+          setStore(
+            produce((s) => {
+              // Find the parent node in the store and set its 'subNodes' field
+              setNodeById(s.nodes.rootNode, id, { isExpanded: true });
+            })
+          );
+        }
+      }
+
+      // const nextFoccusableElement = findNextFoccusableElement();
+
+      // if (nextFoccusableElement === null) {
+      //   return;
+      // }
+
+      // nextFoccusableElement.focus();
     }
   }
 
