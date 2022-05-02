@@ -1,4 +1,6 @@
-function findKeyByPredicat(nodes, predicat, key) {
+// TODO : use pop() instead of shift() -> reverse the use of the data structure.
+// TODO : to delete
+function findKeyByPredicatRecur(nodes, predicat, key) {
   for (const indexNode in nodes) {
     const nbIndexNode = Number(indexNode);
     key.push(nbIndexNode);
@@ -9,7 +11,7 @@ function findKeyByPredicat(nodes, predicat, key) {
     }
 
     if (n.subNodes) {
-      const res = findKeyByPredicat(n.subNodes, predicat, key);
+      const res = findKeyByPredicatRecur(n.subNodes, predicat, key);
       if (res) {
         return res;
       }
@@ -18,8 +20,39 @@ function findKeyByPredicat(nodes, predicat, key) {
   }
 }
 
-function findKeyById(nodes, id) {
-  const res = findKeyByPredicat(nodes, (n) => n.id === id, []);
+// TODO : use pop() instead of shift() -> reverse the use of the data structure.
+function findKeyByPredicatImpe(nodes, predicat) {
+  const nodesToVisit = [...nodes];
+
+  const key = [0];
+  const lengthStack = [nodesToVisit.length];
+  while (0 < nodesToVisit.length && 0 < lengthStack.length) {
+    if (lengthStack[0] <= key[0]) {
+      key.shift();
+      lengthStack.shift();
+      key[0]++;
+      continue;
+    }
+
+    let currentNode = nodesToVisit.shift();
+
+    if (predicat(currentNode)) {
+      return key.reverse();
+    }
+
+    if (currentNode.subNodes) {
+      lengthStack.splice(0, 0, currentNode.subNodes.length);
+      nodesToVisit.splice(0, 0, ...currentNode.subNodes);
+      key.splice(0, 0, 0);
+      continue;
+    }
+    key[0]++;
+  }
+}
+
+// TODO : to delete
+function findKeyById_(nodes, id) {
+  const res = findKeyByPredicatRecur(nodes, (n) => n.id === id, []);
   if (res) {
     return res;
   } else {
@@ -27,20 +60,29 @@ function findKeyById(nodes, id) {
   }
 }
 
-// Test of findKey()
-// console.log("test [0],", findKey([{ id: "0" }], "0"));
-// console.log("test [1],", findKey([{ id: "0" }, { id: "1" }], "1"));
+function findKeyById(nodes, id) {
+  const res = findKeyByPredicatImpe(nodes, (n) => n.id === id);
+  if (res) {
+    return res;
+  } else {
+    return new Error(`Cannot find targetNode "${id}"`);
+  }
+}
+
+// // Test of findKey()
+// console.log("test [0],", findKeyByIdImpe([{ id: "0" }], "0"));
+// console.log("test [1],", findKeyByIdImpe([{ id: "0" }, { id: "1" }], "1"));
 // console.log(
 //   "test [0, 0],",
-//   findKey([{ id: "0", subNodes: [{ id: "00" }] }], "00")
+//   findKeyByIdImpe([{ id: "0", subNodes: [{ id: "00" }] }], "00")
 // );
 // console.log(
 //   "test [0, 1],",
-//   findKey([{ id: "0", subNodes: [{ id: "00" }, { id: "01" }] }], "01")
+//   findKeyByIdImpe([{ id: "0", subNodes: [{ id: "00" }, { id: "01" }] }], "01")
 // );
 // console.log(
 //   "test [1, 0],",
-//   findKey(
+//   findKeyByIdImpe(
 //     [
 //       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
 //       { id: "1", subNodes: [{ id: "10" }, { id: "11" }] },
@@ -49,13 +91,46 @@ function findKeyById(nodes, id) {
 //   )
 // );
 // console.log(
-//   "test null,",
-//   findKey(
+//   "test Error,",
+//   findKeyByIdImpe(
 //     [
 //       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
 //       { id: "1", subNodes: [{ id: "10" }, { id: "11" }] },
 //     ],
 //     "12"
+//   )
+// );
+// console.log(
+//   "test [0, 1],",
+//   findKeyByIdImpe(
+//     [
+//       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
+//       { id: "1", subNodes: [{ id: "10" }] },
+//       { id: "2" },
+//     ],
+//     "01"
+//   )
+// );
+// console.log(
+//   "test [1, 0],",
+//   findKeyByIdImpe(
+//     [
+//       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
+//       { id: "1", subNodes: [{ id: "10" }] },
+//       { id: "2" },
+//     ],
+//     "10"
+//   )
+// );
+// console.log(
+//   "test [2],",
+//   findKeyByIdImpe(
+//     [
+//       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
+//       { id: "1", subNodes: [{ id: "10" }] },
+//       { id: "2" },
+//     ],
+//     "2"
 //   )
 // );
 
