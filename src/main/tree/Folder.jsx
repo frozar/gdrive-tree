@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from "solid-js";
+import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 import { produce } from "solid-js/store";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
@@ -8,22 +8,29 @@ import SpinningWheel from "../../SpinningWheel";
 import { store, setStore } from "../../index";
 
 // TODO: use solidjs-icon librairy
-const ArrowIcon = (props) => {
-  const { isExpanded, setIsExpanded, toggleExpanded } = props;
+const ArrowIcon = ({ isExpanded, toggleExpanded }) => {
+  let arrowRef;
+
+  function handleClickArrow(event) {
+    const { currentTarget } = event;
+    toggleExpanded();
+    if (isExpanded()) {
+      currentTarget.classList.add("expand-folder");
+    } else {
+      currentTarget.classList.remove("expand-folder");
+    }
+  }
+
+  onMount(() => {
+    arrowRef.addEventListener("click", handleClickArrow);
+  });
+
+  onCleanup(() => {
+    arrowRef.removeEventListener("click", handleClickArrow);
+  });
 
   return (
-    <span
-      class="arrow-container custom-transition-duration"
-      onClick={async (event) => {
-        const { currentTarget } = event;
-        toggleExpanded();
-        if (isExpanded()) {
-          currentTarget.classList.add("expand-folder");
-        } else {
-          currentTarget.classList.remove("expand-folder");
-        }
-      }}
-    >
+    <span ref={arrowRef} class="arrow-container custom-transition-duration">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         version="1.1"
@@ -65,7 +72,11 @@ async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
 const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
   const { id, name } = node;
 
-  const [isExpanded, setIsExpanded] = createSignal(false);
+  const isExpanded = () => {
+    const node = getNodeById(store.nodes.rootNode, id);
+    return node.isExpanded;
+  };
+
   const [subNodes, setSubNodes] = createSignal([]);
   const [fetchState, setFetchState] = createSignal("init");
 
@@ -74,41 +85,58 @@ const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
   };
 
   function toggleExpanded() {
-    setIsExpanded((isExpanded) => !isExpanded);
+    const node = getNodeById(store.nodes.rootNode, id);
+    const newIsExpanded = !node.isExpanded;
+
+    setStore(
+      produce((s) => {
+        setNodeById(s.nodes.rootNode, id, { isExpanded: newIsExpanded });
+      })
+    );
   }
 
+  // TODO : replace "isParentExpanded" parameter by a derived signal
   // Fetch only if the parent tree has been expanded once.
   createEffect(() => {
-    if (isParentExpanded()) {
+    // if (isParentExpanded()) {
+    if (isParentExpanded) {
       fetchSubNodes(id, fetchState, setFetchState, setSubNodes);
     }
+  });
+
+  let nameRef;
+
+  function handleClickName(e) {
+    // console.log("e.detail", e.detail);
+    // Handle only double click
+    if (e.detail === 2) {
+      toggleExpanded();
+    }
+  }
+
+  onMount(() => {
+    nameRef.addEventListener("click", handleClickName);
+  });
+
+  onCleanup(() => {
+    nameRef.removeEventListener("click", handleClickName);
   });
 
   return (
     <li id={node.id} data-node-type="folder">
       <span class="folder-surrounding-span">
-        <ArrowIcon
-          isExpanded={isExpanded}
-          setIsExpanded={setIsExpanded}
-          toggleExpanded={toggleExpanded}
-        />
+        <ArrowIcon isExpanded={isExpanded} toggleExpanded={toggleExpanded} />
         <span
           class="selectable"
           tabindex="0"
           autofocus={mustAutofocus}
-          onClick={(e) => {
-            // Handle only double click
-            if (e.detail === 2) {
-              toggleExpanded();
-            }
-          }}
+          ref={nameRef}
         >
           <img
             src={node.iconLink}
             onerror={(event) => {
               const currentImage = event.currentTarget;
               console.info("First image load failed", currentImage.src);
-              // console.log("event", event);
 
               // To prevent this from being executed over and over
               currentImage.onerror = (event) => {

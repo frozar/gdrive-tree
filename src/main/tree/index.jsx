@@ -28,6 +28,7 @@ const Tree = (props) => {
     }
   }
 
+  // TODO : maybe delete the "isExpanded" dataset from the DOM
   function findExpandableParentElement(element) {
     return findParentElementWithPredicat(
       element,
@@ -42,6 +43,7 @@ const Tree = (props) => {
     );
   }
 
+  // TODO: check if element is visible
   function findFoccusableElement(resTabbable, indexTabbableElement, increment) {
     const indexNextTabbableElement = (indexTabbableElement + increment).mod(
       resTabbable.length
@@ -64,7 +66,6 @@ const Tree = (props) => {
     }
   }
 
-  // TODO: check if element is visible
   function getTabbableElement() {
     return tabbable(treeContainerRef);
   }
@@ -127,37 +128,41 @@ const Tree = (props) => {
       nextFoccusableElement.focus();
     }
 
-    if (event.code === "ArrowRight") {
-      event.preventDefault();
-
+    function setExpand(expandValue) {
       const elementNodeType = findNodeTypeParentElement(document.activeElement);
       const nodeType = elementNodeType.dataset.nodeType;
-      console.log(`nodeType [${nodeType}]`);
+      // console.log(`nodeType [${nodeType}]`);
 
       const id = elementNodeType.id;
 
-      console.log("id", id);
+      // console.log("id", id);
 
       if (nodeType === "folder") {
         const gNode = getNodeById(store.nodes.rootNode, id);
-        console.log("gNode", gNode);
-        if (!gNode.isExpanded) {
+        // console.log("gNode", gNode);
+        if (expandValue !== gNode.isExpanded) {
           setStore(
             produce((s) => {
               // Find the parent node in the store and set its 'subNodes' field
-              setNodeById(s.nodes.rootNode, id, { isExpanded: true });
+              setNodeById(s.nodes.rootNode, id, { isExpanded: expandValue });
             })
           );
         }
       }
+    }
 
-      // const nextFoccusableElement = findNextFoccusableElement();
+    // TODO : go to the first sub-element if the node is already expanded
+    if (event.code === "ArrowRight") {
+      event.preventDefault();
 
-      // if (nextFoccusableElement === null) {
-      //   return;
-      // }
+      setExpand(true);
+    }
 
-      // nextFoccusableElement.focus();
+    // TODO : go to the parent element if the node is not expanded
+    if (event.code === "ArrowLeft") {
+      event.preventDefault();
+
+      setExpand(false);
     }
   }
 
@@ -187,6 +192,7 @@ const Tree = (props) => {
       treeContainerRef.dataset.isExpanded = "true";
     } else {
       treeContainerRef.dataset.isExpanded = isExpanded() ? "true" : "false";
+      // treeContainerRef.dataset.isExpanded = isExpanded ? "true" : "false";
     }
     // console.log("AFT treeContainerRef.dataset", treeContainerRef.dataset);
   });
@@ -198,6 +204,7 @@ const Tree = (props) => {
   createEffect(() => {
     if (!isRoot) {
       if (isExpanded()) {
+        // if (isExpanded) {
         if (!height().overwrite) {
           const currentElementHeight = treeRef.getBoundingClientRect().height;
           if (height().value !== currentElementHeight) {
@@ -242,6 +249,7 @@ const Tree = (props) => {
   createEffect(() => {
     if (!isRoot) {
       if (isExpanded()) {
+        // if (isExpanded) {
         treeRef.classList.add("tree--open");
       } else {
         treeRef.classList.remove("tree--open");
@@ -275,6 +283,7 @@ const Tree = (props) => {
                   node={node}
                   setHeight={setHeight}
                   isExpanded={isRoot ? () => true : isExpanded}
+                  // isExpanded={isRoot ? true : isExpanded}
                   mustAutofocus={mustAutofocus}
                 />
               );
