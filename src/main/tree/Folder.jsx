@@ -11,15 +11,21 @@ import { store, setStore } from "../../index";
 const ArrowIcon = ({ isExpanded, toggleExpanded }) => {
   let arrowRef;
 
-  function handleClickArrow(event) {
-    const { currentTarget } = event;
-    toggleExpanded();
-    if (isExpanded()) {
-      currentTarget.classList.add("expand-folder");
+  function addClassIfExpanded(isExpanded) {
+    if (isExpanded) {
+      arrowRef.classList.add("expand-folder");
     } else {
-      currentTarget.classList.remove("expand-folder");
+      arrowRef.classList.remove("expand-folder");
     }
   }
+
+  function handleClickArrow() {
+    toggleExpanded();
+  }
+
+  createEffect(() => {
+    addClassIfExpanded(isExpanded());
+  });
 
   onMount(() => {
     arrowRef.addEventListener("click", handleClickArrow);
@@ -107,7 +113,6 @@ const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
   let nameRef;
 
   function handleClickName(e) {
-    // console.log("e.detail", e.detail);
     // Handle only double click
     if (e.detail === 2) {
       toggleExpanded();

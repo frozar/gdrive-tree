@@ -25,10 +25,12 @@ function findKeyByPredicat(nodes, predicat) {
     }
     key[key.length - 1]++;
   }
+  return null;
 }
 
 function findKeyById(nodes, id) {
   const res = findKeyByPredicat(nodes, (n) => n.id === id);
+
   if (res) {
     return res;
   } else {
@@ -37,7 +39,7 @@ function findKeyById(nodes, id) {
 }
 
 // // Test of findKey()
-// console.log("test [0],", findKeyById([{ id: "0" }], "0"));
+// console.log("test [0],", await findKeyById([{ id: "0" }], "0"));
 // console.log("test [1],", findKeyById([{ id: "0" }, { id: "1" }], "1"));
 // console.log(
 //   "test [0, 0],",
