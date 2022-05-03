@@ -94,8 +94,8 @@ const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
   // TODO : replace "isParentExpanded" parameter by a derived signal
   // Fetch only if the parent tree has been expanded once.
   createEffect(() => {
-    // if (isParentExpanded()) {
-    if (isParentExpanded) {
+    if (isParentExpanded()) {
+      // if (isParentExpanded) {
       fetchSubNodes(id, fetchState, setFetchState, setSubNodes);
     }
   });

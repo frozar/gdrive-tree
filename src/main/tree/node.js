@@ -120,6 +120,10 @@ export function getNodeById(rootNode, id) {
 function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
   let targetNode = getNodeById(rootNode, id);
   if (targetNode) {
+    // console.log(
+    //   "typeof objUpdatesOrFunctionUpdates",
+    //   typeof objUpdatesOrFunctionUpdates
+    // );
     if (typeof objUpdatesOrFunctionUpdates === "object") {
       const objUpdates = objUpdatesOrFunctionUpdates;
       for (const [k, v] of Object.entries(objUpdates)) {
