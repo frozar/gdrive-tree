@@ -1,4 +1,6 @@
-import { unwrap } from "solid-js/store";
+import { unwrap, produce } from "solid-js/store";
+
+import { setStore } from "../../index";
 
 function findKeyByPredicat(nodes, predicat) {
   const nodesToVisit = [...nodes].reverse();
@@ -115,7 +117,7 @@ export function getNodeById(rootNode, id) {
   return targetNode;
 }
 
-export function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
+function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
   let targetNode = getNodeById(rootNode, id);
   if (targetNode) {
     if (typeof objUpdatesOrFunctionUpdates === "object") {
@@ -133,6 +135,14 @@ export function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
       }
     }
   }
+}
+
+export function setNodeInStoreById(id, objUpdatesOrFunctionUpdates) {
+  setStore(
+    produce((s) => {
+      setNodeById(s.nodes.rootNode, id, objUpdatesOrFunctionUpdates);
+    })
+  );
 }
 
 export function isFolder(node) {

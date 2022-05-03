@@ -1,11 +1,10 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
-import { produce } from "solid-js/store";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
 import Tree from "./index";
-import { setNodeById, getNodeById, getRicherNodes } from "./node";
+import { setNodeInStoreById, getNodeById, getRicherNodes } from "./node";
 import SpinningWheel from "../../SpinningWheel";
-import { store, setStore } from "../../index";
+import { store } from "../../index";
 
 // TODO: use solidjs-icon librairy
 const ArrowIcon = ({ isExpanded, toggleExpanded }) => {
@@ -58,12 +57,7 @@ async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
       const nodes = await getSortedNodesFromDirectory(999, "*", id);
       const richerNodes = getRicherNodes(nodes);
 
-      setStore(
-        produce((s) => {
-          // Find the parent node in the store and set its 'subNodes' field
-          setNodeById(s.nodes.rootNode, id, { subNodes: richerNodes });
-        })
-      );
+      setNodeInStoreById(id, { subNodes: richerNodes });
 
       let targetNode = getNodeById(store.nodes.rootNode, id);
       setSubNodes(targetNode.subNodes);
@@ -91,14 +85,10 @@ const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
   };
 
   function toggleExpanded() {
-    setStore(
-      produce((s) => {
-        setNodeById(s.nodes.rootNode, id, (obj) => ({
-          ...obj,
-          isExpanded: !obj.isExpanded,
-        }));
-      })
-    );
+    setNodeInStoreById(id, (obj) => ({
+      ...obj,
+      isExpanded: !obj.isExpanded,
+    }));
   }
 
   // TODO : replace "isParentExpanded" parameter by a derived signal

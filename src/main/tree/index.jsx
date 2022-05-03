@@ -1,11 +1,9 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
-import { produce } from "solid-js/store";
 
 import { tabbable } from "tabbable";
 
 import Node from "./Node";
-import { getNodeById, setNodeById } from "./node";
-import { store, setStore } from "../../index";
+import { setNodeInStoreById } from "./node";
 
 const Tree = (props) => {
   const { nodes, isRoot, isExpanded, setParentHeight } = props;
@@ -138,16 +136,9 @@ const Tree = (props) => {
       // console.log("id", id);
 
       if (nodeType === "folder") {
-        const gNode = getNodeById(store.nodes.rootNode, id);
-        // console.log("gNode", gNode);
-        if (expandValue !== gNode.isExpanded) {
-          setStore(
-            produce((s) => {
-              // Find the parent node in the store and set its 'subNodes' field
-              setNodeById(s.nodes.rootNode, id, { isExpanded: expandValue });
-            })
-          );
-        }
+        setNodeInStoreById(id, {
+          isExpanded: expandValue,
+        });
       }
     }
 
