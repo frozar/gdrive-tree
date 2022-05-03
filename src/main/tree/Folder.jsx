@@ -2,7 +2,12 @@ import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
 import Tree from "./index";
-import { setNodeInStoreById, getNodeById, getRicherNodes } from "./node";
+import {
+  setNodeInStoreById,
+  getNodeById,
+  getParentNodeById,
+  getRicherNodes,
+} from "./node";
 import SpinningWheel from "../../SpinningWheel";
 import { store } from "../../index";
 
@@ -54,13 +59,15 @@ async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
   if (fetchState() !== "done") {
     try {
       setFetchState("running");
+      // TODO : enbedded deeper the call to the getRicherNodes() function
       const nodes = await getSortedNodesFromDirectory(999, "*", id);
       const richerNodes = getRicherNodes(nodes);
 
       setNodeInStoreById(id, { subNodes: richerNodes });
 
-      let targetNode = getNodeById(store.nodes.rootNode, id);
-      setSubNodes(targetNode.subNodes);
+      // let targetNode = getNodeById(store.nodes.rootNode, id);
+      // setSubNodes(targetNode.subNodes);
+      setSubNodes(richerNodes);
       setFetchState("done");
     } catch (error) {
       console.error(error);
@@ -69,12 +76,21 @@ async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
   }
 }
 
-const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
+const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   const { id, name } = node;
 
   const isExpanded = () => {
     const node = getNodeById(store.nodes.rootNode, id);
     return node.isExpanded;
+  };
+
+  const isParentExpanded = () => {
+    const parentNode = getParentNodeById(store.nodes.rootNode, id);
+    if (parentNode) {
+      return parentNode.isExpanded;
+    } else {
+      return false;
+    }
   };
 
   const [subNodes, setSubNodes] = createSignal([]);
@@ -91,11 +107,9 @@ const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
     }));
   }
 
-  // TODO : replace "isParentExpanded" parameter by a derived signal
   // Fetch only if the parent tree has been expanded once.
   createEffect(() => {
     if (isParentExpanded()) {
-      // if (isParentExpanded) {
       fetchSubNodes(id, fetchState, setFetchState, setSubNodes);
     }
   });
@@ -147,7 +161,11 @@ const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
             }}
           />
           <span
-            style="margin-left: 4px; margin-right: 2px"
+            style={
+              fetchState() === "failed"
+                ? "margin-left: 4px; margin-right: 2px; color: red"
+                : "margin-left: 4px; margin-right: 2px"
+            }
             contenteditable="false"
           >
             {name}

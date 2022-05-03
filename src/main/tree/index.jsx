@@ -273,8 +273,6 @@ const Tree = (props) => {
                 <Node
                   node={node}
                   setHeight={setHeight}
-                  isExpanded={isRoot ? () => true : isExpanded}
-                  // isExpanded={isRoot ? true : isExpanded}
                   mustAutofocus={mustAutofocus}
                 />
               );

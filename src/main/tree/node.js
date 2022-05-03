@@ -2,19 +2,14 @@ import { unwrap, produce } from "solid-js/store";
 
 import { setStore } from "../../index";
 
-function findKeyByPredicat(nodes, predicat) {
-  const nodesToVisit = [...nodes].reverse();
+// function findKeyByPredicat(nodes, predicat) {
+function findKeyByPredicat(root, predicat) {
+  // const nodesToVisit = [...nodes].reverse();
+  const nodesToVisit = [{ ...root }];
 
-  const key = [0];
+  const key = [];
   const lengthStack = [nodesToVisit.length];
   while (0 < nodesToVisit.length && 0 < lengthStack.length) {
-    if (lengthStack.at(-1) <= key.at(-1)) {
-      key.pop();
-      lengthStack.pop();
-      key[key.length - 1]++;
-      continue;
-    }
-
     let currentNode = nodesToVisit.pop();
 
     if (predicat(currentNode)) {
@@ -28,93 +23,154 @@ function findKeyByPredicat(nodes, predicat) {
       continue;
     }
     key[key.length - 1]++;
+
+    if (lengthStack.at(-1) <= key.at(-1)) {
+      key.pop();
+      lengthStack.pop();
+      if (0 < key.length) {
+        key[key.length - 1]++;
+        continue;
+      } else {
+        break;
+      }
+    }
   }
   return null;
 }
 
-function findKeyById(nodes, id) {
-  const res = findKeyByPredicat(nodes, (n) => n.id === id);
+function findKeyById(root, id) {
+  const res = findKeyByPredicat(root, (n) => n.id === id);
 
   if (res) {
     return res;
   } else {
+    console.log("root", root);
+    console.log("id", id);
     return new Error(`Cannot find targetNode "${id}"`);
   }
 }
 
 // // Test of findKey()
-// console.log("test [0],", await findKeyById([{ id: "0" }], "0"));
-// console.log("test [1],", findKeyById([{ id: "0" }, { id: "1" }], "1"));
+// console.log("test [0],", findKeyById([{ id: "0" }], "0"));
+// console.log("test [],", findKeyById({ id: "root" }, "root"));
+// console.log("test null,", findKeyById({ id: "root" }, "0"));
+// console.log(
+//   "test [0],",
+//   findKeyById({ id: "root", subNodes: [{ id: "0" }] }, "0")
+// );
+// console.log(
+//   "test [1],",
+//   findKeyById({ id: "root", subNodes: [{ id: "0" }, { id: "1" }] }, "1")
+// );
 // console.log(
 //   "test [0, 0],",
-//   findKeyById([{ id: "0", subNodes: [{ id: "00" }] }], "00")
-// );
-// console.log(
-//   "test [0, 1],",
-//   findKeyById([{ id: "0", subNodes: [{ id: "00" }, { id: "01" }] }], "01")
-// );
-// console.log(
-//   "test [1, 0],",
 //   findKeyById(
-//     [
-//       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
-//       { id: "1", subNodes: [{ id: "10" }, { id: "11" }] },
-//     ],
-//     "10"
-//   )
-// );
-// console.log(
-//   "test Error,",
-//   findKeyById(
-//     [
-//       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
-//       { id: "1", subNodes: [{ id: "10" }, { id: "11" }] },
-//     ],
-//     "12"
+//     { id: "root", subNodes: [{ id: "0", subNodes: [{ id: "00" }] }] },
+//     "00"
 //   )
 // );
 // console.log(
 //   "test [0, 1],",
 //   findKeyById(
-//     [
-//       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
-//       { id: "1", subNodes: [{ id: "10" }] },
-//       { id: "2" },
-//     ],
+//     {
+//       id: "root",
+//       subNodes: [{ id: "0", subNodes: [{ id: "00" }, { id: "01" }] }],
+//     },
 //     "01"
 //   )
 // );
 // console.log(
 //   "test [1, 0],",
 //   findKeyById(
-//     [
-//       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
-//       { id: "1", subNodes: [{ id: "10" }] },
-//       { id: "2" },
-//     ],
+//     {
+//       id: "root",
+//       subNodes: [
+//         { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
+//         { id: "1", subNodes: [{ id: "10" }, { id: "11" }] },
+//       ],
+//     },
+//     "10"
+//   )
+// );
+// console.log(
+//   "test Error,",
+//   findKeyById(
+//     {
+//       id: "root",
+//       subNodes: [
+//         { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
+//         { id: "1", subNodes: [{ id: "10" }, { id: "11" }] },
+//       ],
+//     },
+//     "12"
+//   )
+// );
+// console.log(
+//   "test [0, 1],",
+//   findKeyById(
+//     {
+//       id: "root",
+//       subNodes: [
+//         { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
+//         { id: "1", subNodes: [{ id: "10" }] },
+//         { id: "2" },
+//       ],
+//     },
+//     "01"
+//   )
+// );
+// console.log(
+//   "test [1, 0],",
+//   findKeyById(
+//     {
+//       id: "root",
+//       subNodes: [
+//         { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
+//         { id: "1", subNodes: [{ id: "10" }] },
+//         { id: "2" },
+//       ],
+//     },
 //     "10"
 //   )
 // );
 // console.log(
 //   "test [2],",
 //   findKeyById(
-//     [
-//       { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
-//       { id: "1", subNodes: [{ id: "10" }] },
-//       { id: "2" },
-//     ],
+//     {
+//       id: "root",
+//       subNodes: [
+//         { id: "0", subNodes: [{ id: "00" }, { id: "01" }] },
+//         { id: "1", subNodes: [{ id: "10" }] },
+//         { id: "2" },
+//       ],
+//     },
 //     "2"
 //   )
 // );
 
-export function getNodeById(rootNode, id) {
-  const key = findKeyById(rootNode.subNodes, id);
-
+function itereOverNodes(rootNode, key) {
   let targetNode = { ...rootNode };
   for (const k of key) {
     targetNode = targetNode.subNodes[k];
   }
   return targetNode;
+}
+
+export function getNodeById(rootNode, id) {
+  const key = findKeyById(rootNode, id);
+
+  return itereOverNodes(rootNode, key);
+}
+
+export function getParentNodeById(rootNode, id) {
+  const key = findKeyById(rootNode, id);
+
+  if (key.length === 0) {
+    return null;
+  } else {
+    key.pop();
+    return itereOverNodes(rootNode, key);
+  }
 }
 
 function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
