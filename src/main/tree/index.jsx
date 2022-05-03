@@ -3,10 +3,31 @@ import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 import { tabbable } from "tabbable";
 
 import Node from "./Node";
-import { setNodeInStoreById } from "./node";
+import { setNodeInStoreById, getNodeById } from "./node";
+import { store } from "../../index";
 
-const Tree = (props) => {
-  const { nodes, isRoot, isExpanded, setParentHeight } = props;
+// TODO : erase the 'setParentHeight' function and store the
+// height of a node in a richer node.
+const Tree = ({ id, setParentHeight }) => {
+  const isRoot = id === "root";
+
+  const nodes = () => {
+    const node = getNodeById(store.nodes.rootNode, id);
+    if (node && node.subNodes) {
+      return node.subNodes;
+    } else {
+      return [];
+    }
+  };
+
+  const isExpanded = () => {
+    const foundNode = getNodeById(store.nodes.rootNode, id);
+    if (foundNode) {
+      return foundNode.isExpanded;
+    } else {
+      return false;
+    }
+  };
 
   const [height, setHeight] = createSignal({ value: 0, overwrite: false });
 

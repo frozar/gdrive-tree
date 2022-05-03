@@ -12,7 +12,16 @@ import SpinningWheel from "../../SpinningWheel";
 import { store } from "../../index";
 
 // TODO: use solidjs-icon librairy
-const ArrowIcon = ({ isExpanded, toggleExpanded }) => {
+const ArrowIcon = ({ id, toggleExpanded }) => {
+  const isExpanded = () => {
+    const foundNode = getNodeById(store.nodes.rootNode, id);
+    if (foundNode) {
+      return foundNode.isExpanded;
+    } else {
+      return false;
+    }
+  };
+
   let arrowRef;
 
   function addClassIfExpanded(isExpanded) {
@@ -55,7 +64,7 @@ const ArrowIcon = ({ isExpanded, toggleExpanded }) => {
   );
 };
 
-async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
+async function fetchSubNodes(id, fetchState, setFetchState) {
   if (fetchState() !== "done") {
     try {
       setFetchState("running");
@@ -65,9 +74,6 @@ async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
 
       setNodeInStoreById(id, { subNodes: richerNodes });
 
-      // let targetNode = getNodeById(store.nodes.rootNode, id);
-      // setSubNodes(targetNode.subNodes);
-      setSubNodes(richerNodes);
       setFetchState("done");
     } catch (error) {
       console.error(error);
@@ -77,23 +83,6 @@ async function fetchSubNodes(id, fetchState, setFetchState, setSubNodes) {
 }
 
 const Folder = ({ node, setParentHeight, mustAutofocus }) => {
-  const { id, name } = node;
-
-  const isExpanded = () => {
-    const node = getNodeById(store.nodes.rootNode, id);
-    return node.isExpanded;
-  };
-
-  const isParentExpanded = () => {
-    const parentNode = getParentNodeById(store.nodes.rootNode, id);
-    if (parentNode) {
-      return parentNode.isExpanded;
-    } else {
-      return false;
-    }
-  };
-
-  const [subNodes, setSubNodes] = createSignal([]);
   const [fetchState, setFetchState] = createSignal("init");
 
   const SmallSpinningWheel = () => {
@@ -101,16 +90,25 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   };
 
   function toggleExpanded() {
-    setNodeInStoreById(id, (obj) => ({
+    setNodeInStoreById(node.id, (obj) => ({
       ...obj,
       isExpanded: !obj.isExpanded,
     }));
   }
 
+  const isParentExpanded = () => {
+    const parentNode = getParentNodeById(store.nodes.rootNode, node.id);
+    if (parentNode) {
+      return parentNode.isExpanded;
+    } else {
+      return false;
+    }
+  };
+
   // Fetch only if the parent tree has been expanded once.
   createEffect(() => {
     if (isParentExpanded()) {
-      fetchSubNodes(id, fetchState, setFetchState, setSubNodes);
+      fetchSubNodes(node.id, fetchState, setFetchState);
     }
   });
 
@@ -134,7 +132,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   return (
     <li id={node.id} data-node-type="folder">
       <span class="folder-surrounding-span">
-        <ArrowIcon isExpanded={isExpanded} toggleExpanded={toggleExpanded} />
+        <ArrowIcon id={node.id} toggleExpanded={toggleExpanded} />
         <span
           class="selectable"
           tabindex="0"
@@ -168,19 +166,13 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
             }
             contenteditable="false"
           >
-            {name}
+            {node.name}
           </span>
         </span>
         {fetchState() === "running" && <SmallSpinningWheel />}
       </span>
       {fetchState() === "done" && (
-        <Tree
-          isRoot={false}
-          nodes={subNodes}
-          isExpanded={isExpanded}
-          setParentHeight={setParentHeight}
-          name={name}
-        />
+        <Tree id={node.id} setParentHeight={setParentHeight} />
       )}
     </li>
   );

@@ -2,9 +2,7 @@ import { unwrap, produce } from "solid-js/store";
 
 import { setStore } from "../../index";
 
-// function findKeyByPredicat(nodes, predicat) {
-function findKeyByPredicat(root, predicat) {
-  // const nodesToVisit = [...nodes].reverse();
+function findNodeKeyByPredicat(root, predicat) {
   const nodesToVisit = [{ ...root }];
 
   const key = [];
@@ -13,7 +11,7 @@ function findKeyByPredicat(root, predicat) {
     let currentNode = nodesToVisit.pop();
 
     if (predicat(currentNode)) {
-      return key;
+      return [currentNode, key];
     }
 
     if (currentNode.subNodes) {
@@ -38,8 +36,8 @@ function findKeyByPredicat(root, predicat) {
   return null;
 }
 
-function findKeyById(root, id) {
-  const res = findKeyByPredicat(root, (n) => n.id === id);
+function findNodeKeyById(root, id) {
+  const res = findNodeKeyByPredicat(root, (n) => n.id === id);
 
   if (res) {
     return res;
@@ -157,13 +155,13 @@ function itereOverNodes(rootNode, key) {
 }
 
 export function getNodeById(rootNode, id) {
-  const key = findKeyById(rootNode, id);
+  const [node, _] = findNodeKeyById(rootNode, id);
 
-  return itereOverNodes(rootNode, key);
+  return node;
 }
 
 export function getParentNodeById(rootNode, id) {
-  const key = findKeyById(rootNode, id);
+  const [_, key] = findNodeKeyById(rootNode, id);
 
   if (key.length === 0) {
     return null;

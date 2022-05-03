@@ -51,9 +51,6 @@ const ShowFilesButton = ({ initSwitch }) => {
 const TreeContainer = ({ initSwitch }) => {
   createEffect(checkHasCredential);
 
-  // Create a derived nodes variables
-  const nodes = () => store.nodes.rootNode.subNodes;
-
   return (
     <Show
       when={
@@ -63,7 +60,7 @@ const TreeContainer = ({ initSwitch }) => {
       }
       fallback={<ShowFilesButton initSwitch={initSwitch} />}
     >
-      <Tree isRoot={true} nodes={nodes} />
+      <Tree id="root" />
     </Show>
   );
 };
