@@ -91,12 +91,12 @@ const Folder = ({ node, setParentHeight, isParentExpanded, mustAutofocus }) => {
   };
 
   function toggleExpanded() {
-    const node = getNodeById(store.nodes.rootNode, id);
-    const newIsExpanded = !node.isExpanded;
-
     setStore(
       produce((s) => {
-        setNodeById(s.nodes.rootNode, id, { isExpanded: newIsExpanded });
+        setNodeById(s.nodes.rootNode, id, (obj) => ({
+          ...obj,
+          isExpanded: !obj.isExpanded,
+        }));
       })
     );
   }

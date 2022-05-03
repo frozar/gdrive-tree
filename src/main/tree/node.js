@@ -1,3 +1,5 @@
+import { unwrap } from "solid-js/store";
+
 function findKeyByPredicat(nodes, predicat) {
   const nodesToVisit = [...nodes].reverse();
 
@@ -113,11 +115,22 @@ export function getNodeById(rootNode, id) {
   return targetNode;
 }
 
-export function setNodeById(rootNode, id, updates) {
+export function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
   let targetNode = getNodeById(rootNode, id);
   if (targetNode) {
-    for (const [k, v] of Object.entries(updates)) {
-      targetNode[k] = v;
+    if (typeof objUpdatesOrFunctionUpdates === "object") {
+      const objUpdates = objUpdatesOrFunctionUpdates;
+      for (const [k, v] of Object.entries(objUpdates)) {
+        targetNode[k] = v;
+      }
+    }
+
+    if (typeof objUpdatesOrFunctionUpdates === "function") {
+      const fUpdates = objUpdatesOrFunctionUpdates;
+      const newTargetNode = fUpdates(unwrap(targetNode));
+      for (const key of Object.keys(newTargetNode)) {
+        targetNode[key] = newTargetNode[key];
+      }
     }
   }
 }
