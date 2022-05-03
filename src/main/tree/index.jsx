@@ -3,7 +3,7 @@ import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 import { tabbable } from "tabbable";
 
 import Node from "./Node";
-import { setNodeInStoreById, getNodeById } from "./node";
+import { setNodeInStoreById, getNodeById, isFolder } from "./node";
 import { store } from "../../index";
 
 // TODO : erase the 'setParentHeight' function and store the
@@ -40,7 +40,7 @@ const Tree = ({ id, setParentHeight }) => {
       return null;
     }
 
-    if (predicat(parentElement.dataset)) {
+    if (predicat(parentElement)) {
       return parentElement;
     } else {
       return findParentElementWithPredicat(parentElement, predicat);
@@ -51,15 +51,22 @@ const Tree = ({ id, setParentHeight }) => {
   function findExpandableParentElement(element) {
     return findParentElementWithPredicat(
       element,
-      (dataset) => dataset.isExpanded !== undefined
+      (element) => element.dataset.isExpanded !== undefined
     );
   }
 
-  function findNodeTypeParentElement(element) {
-    return findParentElementWithPredicat(
+  function findNearestUpperId(element) {
+    const parentElementWithId = findParentElementWithPredicat(
       element,
-      (dataset) => dataset.nodeType !== undefined
+      (element) =>
+        element.tagName === "LI" && element.getAttribute("id") !== null
     );
+
+    if (parentElementWithId) {
+      return parentElementWithId.getAttribute("id");
+    } else {
+      return new Error(`Cannot find parent id for element ${element}`);
+    }
   }
 
   // TODO: check if element is visible
@@ -148,15 +155,10 @@ const Tree = ({ id, setParentHeight }) => {
     }
 
     function setExpand(expandValue) {
-      const elementNodeType = findNodeTypeParentElement(document.activeElement);
-      const nodeType = elementNodeType.dataset.nodeType;
-      // console.log(`nodeType [${nodeType}]`);
+      const id = findNearestUpperId(document.activeElement);
+      const node = getNodeById(store.nodes.rootNode, id);
 
-      const id = elementNodeType.id;
-
-      // console.log("id", id);
-
-      if (nodeType === "folder") {
+      if (isFolder(node)) {
         setNodeInStoreById(id, {
           isExpanded: expandValue,
         });

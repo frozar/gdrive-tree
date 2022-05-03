@@ -130,7 +130,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   });
 
   return (
-    <li id={node.id} data-node-type="folder">
+    <li id={node.id}>
       <span class="folder-surrounding-span">
         <ArrowIcon id={node.id} toggleExpanded={toggleExpanded} />
         <span
