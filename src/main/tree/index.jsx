@@ -99,10 +99,18 @@ const Tree = ({ id, setParentHeight }) => {
     }
   }
 
-  function findFoccusableElement(resTabbable, indexTabbableElement, increment) {
-    const indexNextTabbableElement = (indexTabbableElement + increment).mod(
-      resTabbable.length
-    );
+  function findFoccusableElement(
+    resTabbable,
+    indexTabbableElement,
+    increment,
+    cycle
+  ) {
+    const indexNextTabbableElement = cycle
+      ? (indexTabbableElement + increment).mod(resTabbable.length)
+      : Math.max(
+          0,
+          Math.min(indexTabbableElement + increment, resTabbable.length - 1)
+        );
     const nextTabbableElement = resTabbable[indexNextTabbableElement];
     const nereastId = findNearestUpperId(nextTabbableElement);
     if (nereastId === null) {
@@ -121,7 +129,8 @@ const Tree = ({ id, setParentHeight }) => {
       return findFoccusableElement(
         resTabbable,
         indexNextTabbableElement,
-        increment
+        increment,
+        cycle
       );
     }
   }
@@ -130,22 +139,22 @@ const Tree = ({ id, setParentHeight }) => {
     return tabbable(treeContainerRef);
   }
 
-  function findNextFoccusableElement() {
+  function findNextFoccusableElement(cycle) {
     const resTabbable = getTabbableElement();
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
     }
-    return findFoccusableElement(resTabbable, indexTabbableElement, +1);
+    return findFoccusableElement(resTabbable, indexTabbableElement, +1, cycle);
   }
 
-  function findPreviousFoccusableElement() {
+  function findPreviousFoccusableElement(cycle) {
     const resTabbable = getTabbableElement();
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
     }
-    return findFoccusableElement(resTabbable, indexTabbableElement, -1);
+    return findFoccusableElement(resTabbable, indexTabbableElement, -1, cycle);
   }
 
   function handleKeyDown(event) {
@@ -168,12 +177,20 @@ const Tree = ({ id, setParentHeight }) => {
       focusElementIfFound(nextFoccusableElement);
     }
 
-    function handleArrowUp() {
+    function handleArrowUp(opt) {
+      let cycle = true;
+      if (opt && opt.cycle && typeof opt.cycle === "boolean") {
+        cycle = opt.cycle;
+      }
       const nextFoccusableElement = findPreviousFoccusableElement();
       focusElementIfFound(nextFoccusableElement);
     }
 
-    function handleArrowDown() {
+    function handleArrowDown(opt) {
+      let cycle = true;
+      if (opt && opt.cycle && typeof opt.cycle === "boolean") {
+        cycle = opt.cycle;
+      }
       const nextFoccusableElement = findNextFoccusableElement();
       focusElementIfFound(nextFoccusableElement);
     }
@@ -236,6 +253,59 @@ const Tree = ({ id, setParentHeight }) => {
         const childFoccusable =
           findNearestLowerFoccusableElement(parentElement);
         childFoccusable.focus();
+      }
+    }
+
+    if (event.code === "Enter") {
+      event.preventDefault();
+
+      const id = findNearestUpperId(document.activeElement);
+      if (id === null) {
+        return;
+      }
+      const node = getNodeById(store.nodes.rootNode, id);
+      if (isFolder(node)) {
+        if (!node.isExpanded) {
+          setNodeInStoreById(id, {
+            isExpanded: true,
+          });
+        }
+      } else {
+        window.open(node.webViewLink, "_blank").focus();
+      }
+    }
+
+    if (event.code === "Space") {
+      event.preventDefault();
+
+      const id = findNearestUpperId(document.activeElement);
+      if (id === null) {
+        return;
+      }
+
+      const node = getNodeById(store.nodes.rootNode, id);
+      if (isFolder(node)) {
+        setNodeInStoreById(id, {
+          isExpanded: !node.isExpanded,
+        });
+      }
+    }
+
+    const nbMovePage = 10;
+
+    if (event.code === "PageUp") {
+      event.preventDefault();
+
+      for (const _ of Array(nbMovePage).keys()) {
+        handleArrowUp({ cycle: false });
+      }
+    }
+
+    if (event.code === "PageDown") {
+      event.preventDefault();
+
+      for (const _ of Array(nbMovePage).keys()) {
+        handleArrowDown({ cycle: false });
       }
     }
   }
