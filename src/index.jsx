@@ -9,8 +9,8 @@ import App from "./App";
 const defaultStore = {
   isExternalLibLoaded: false,
   hasCredential: false,
-  rootNodes: {
-    content: [],
+  nodes: {
+    rootNode: { id: "root", isExpanded: true, subNodes: null },
     isInitialised: false,
     isLoading: false,
   },

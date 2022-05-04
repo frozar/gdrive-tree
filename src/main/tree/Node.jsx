@@ -1,13 +1,13 @@
 import File from "./File";
 import Folder from "./Folder";
+import { isFolder } from "./node";
 
-const Node = ({ node, setHeight, isExpanded, mustAutofocus }) => {
-  if (node.mimeType === "application/vnd.google-apps.folder") {
+const Node = ({ node, setHeight, mustAutofocus }) => {
+  if (isFolder(node)) {
     return (
       <Folder
         node={node}
         setParentHeight={setHeight}
-        isParentExpanded={isExpanded}
         mustAutofocus={mustAutofocus}
       />
     );

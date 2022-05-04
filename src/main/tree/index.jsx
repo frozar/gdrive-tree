@@ -1,86 +1,188 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
+
 import { tabbable } from "tabbable";
 
 import Node from "./Node";
+import {
+  setNodeInStoreById,
+  getNodeById,
+  isFolder,
+  getNodePathById,
+} from "./node";
+import { store } from "../../index";
 
-const Tree = (props) => {
-  const { nodes, isRoot, isExpanded, setParentHeight } = props;
+// TODO : erase the 'setParentHeight' function and store the
+// height of a node in a richer node.
+const Tree = ({ id, setParentHeight }) => {
+  const isRoot = id === "root";
+
+  const nodes = () => {
+    const node = getNodeById(store.nodes.rootNode, id);
+    if (node && node.subNodes) {
+      return node.subNodes;
+    } else {
+      return [];
+    }
+  };
+
+  const isExpanded = () => {
+    const foundNode = getNodeById(store.nodes.rootNode, id);
+    if (foundNode) {
+      return foundNode.isExpanded;
+    } else {
+      return false;
+    }
+  };
 
   const [height, setHeight] = createSignal({ value: 0, overwrite: false });
 
   let treeContainerRef;
   let treeRef;
 
+  function findParentElementWithPredicat(element, predicat) {
+    const parentElement = element.parentElement;
+    if (!parentElement) {
+      return null;
+    }
+
+    if (predicat(parentElement)) {
+      return parentElement;
+    } else {
+      return findParentElementWithPredicat(parentElement, predicat);
+    }
+  }
+
+  // TODO : maybe delete the "isExpanded" dataset from the DOM
+  function findExpandableParentElement(element) {
+    return findParentElementWithPredicat(
+      element,
+      (element) => element.dataset.isExpanded !== undefined
+    );
+  }
+
+  function findNearestUpperId(element) {
+    const parentElementWithId = findParentElementWithPredicat(
+      element,
+      (element) =>
+        element.tagName === "LI" && element.getAttribute("id") !== null
+    );
+
+    if (parentElementWithId) {
+      return parentElementWithId.getAttribute("id");
+    } else {
+      return new Error(`Cannot find parent id for element ${element}`);
+    }
+  }
+
+  function findFoccusableElement(resTabbable, indexTabbableElement, increment) {
+    const indexNextTabbableElement = (indexTabbableElement + increment).mod(
+      resTabbable.length
+    );
+    const nextTabbableElement = resTabbable[indexNextTabbableElement];
+    const nereastId = findNearestUpperId(nextTabbableElement);
+    const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
+
+    // Check if every parent element is expanded, so visible
+    if (
+      !nodePath
+        .slice(0, nodePath.length - 1)
+        .some((n) => n.isExpanded === false)
+    ) {
+      return nextTabbableElement;
+    } else {
+      return findFoccusableElement(
+        resTabbable,
+        indexNextTabbableElement,
+        increment
+      );
+    }
+  }
+
+  function getTabbableElement() {
+    return tabbable(treeContainerRef);
+  }
+
+  function findNextFoccusableElement() {
+    const resTabbable = getTabbableElement();
+    const indexTabbableElement = resTabbable.indexOf(document.activeElement);
+    if (indexTabbableElement === -1) {
+      return null;
+    }
+    return findFoccusableElement(resTabbable, indexTabbableElement, +1);
+  }
+
+  function findPreviousFoccusableElement() {
+    const resTabbable = getTabbableElement();
+    const indexTabbableElement = resTabbable.indexOf(document.activeElement);
+    if (indexTabbableElement === -1) {
+      return null;
+    }
+    return findFoccusableElement(resTabbable, indexTabbableElement, -1);
+  }
+
   function handleKeyDown(event) {
     if (event.code === "Tab") {
       event.preventDefault();
-      const resTabbable = tabbable(treeContainerRef);
-      const indexTabbableElement = resTabbable.indexOf(document.activeElement);
-
-      if (indexTabbableElement === -1) {
-        return;
-      }
-
-      function findExpandableParentElement(element) {
-        const parentElement = element.parentElement;
-        if (!parentElement) {
-          return null;
-        }
-
-        if (parentElement.dataset.isExpanded !== undefined) {
-          return parentElement;
-        } else {
-          return findExpandableParentElement(parentElement);
-        }
-      }
-
-      function findFoccusableElement(
-        resTabbable,
-        indexTabbableElement,
-        increment
-      ) {
-        const indexNextTabbableElement = (indexTabbableElement + increment).mod(
-          resTabbable.length
-        );
-        const nextTabbableElement = resTabbable[indexNextTabbableElement];
-        const parentElement = findExpandableParentElement(nextTabbableElement);
-
-        if (parentElement === null) {
-          return null;
-        }
-
-        if (parentElement.dataset.isExpanded === "true") {
-          return nextTabbableElement;
-        } else {
-          return findFoccusableElement(
-            resTabbable,
-            indexNextTabbableElement,
-            increment
-          );
-        }
-      }
-
-      function findNextFoccusableElement(resTabbable, indexTabbableElement) {
-        return findFoccusableElement(resTabbable, indexTabbableElement, +1);
-      }
-
-      function findPreviousFoccusableElement(
-        resTabbable,
-        indexTabbableElement
-      ) {
-        return findFoccusableElement(resTabbable, indexTabbableElement, -1);
-      }
 
       const nextFoccusableElement =
         event.shiftKey === false
-          ? findNextFoccusableElement(resTabbable, indexTabbableElement)
-          : findPreviousFoccusableElement(resTabbable, indexTabbableElement);
+          ? findNextFoccusableElement()
+          : findPreviousFoccusableElement();
 
       if (nextFoccusableElement === null) {
         return;
       }
 
       nextFoccusableElement.focus();
+    }
+
+    if (event.code === "ArrowUp") {
+      event.preventDefault();
+
+      const nextFoccusableElement = findPreviousFoccusableElement();
+
+      if (nextFoccusableElement === null) {
+        return;
+      }
+
+      nextFoccusableElement.focus();
+    }
+
+    if (event.code === "ArrowDown") {
+      event.preventDefault();
+
+      const nextFoccusableElement = findNextFoccusableElement();
+
+      if (nextFoccusableElement === null) {
+        return;
+      }
+
+      nextFoccusableElement.focus();
+    }
+
+    function setExpand(expandValue) {
+      const id = findNearestUpperId(document.activeElement);
+      const node = getNodeById(store.nodes.rootNode, id);
+
+      if (isFolder(node)) {
+        setNodeInStoreById(id, {
+          isExpanded: expandValue,
+        });
+      }
+    }
+
+    // TODO : go to the first sub-element if the node is already expanded
+    if (event.code === "ArrowRight") {
+      event.preventDefault();
+
+      setExpand(true);
+    }
+
+    // TODO : go to the parent element if the node is not expanded
+    if (event.code === "ArrowLeft") {
+      event.preventDefault();
+
+      setExpand(false);
     }
   }
 
@@ -110,6 +212,7 @@ const Tree = (props) => {
       treeContainerRef.dataset.isExpanded = "true";
     } else {
       treeContainerRef.dataset.isExpanded = isExpanded() ? "true" : "false";
+      // treeContainerRef.dataset.isExpanded = isExpanded ? "true" : "false";
     }
     // console.log("AFT treeContainerRef.dataset", treeContainerRef.dataset);
   });
@@ -121,6 +224,7 @@ const Tree = (props) => {
   createEffect(() => {
     if (!isRoot) {
       if (isExpanded()) {
+        // if (isExpanded) {
         if (!height().overwrite) {
           const currentElementHeight = treeRef.getBoundingClientRect().height;
           if (height().value !== currentElementHeight) {
@@ -165,6 +269,7 @@ const Tree = (props) => {
   createEffect(() => {
     if (!isRoot) {
       if (isExpanded()) {
+        // if (isExpanded) {
         treeRef.classList.add("tree--open");
       } else {
         treeRef.classList.remove("tree--open");
@@ -197,7 +302,6 @@ const Tree = (props) => {
                 <Node
                   node={node}
                   setHeight={setHeight}
-                  isExpanded={isRoot ? () => true : isExpanded}
                   mustAutofocus={mustAutofocus}
                 />
               );
