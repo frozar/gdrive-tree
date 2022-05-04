@@ -171,27 +171,28 @@ const Tree = ({ id, setParentHeight }) => {
 
       const nextFoccusableElement =
         event.shiftKey === false
-          ? findNextFoccusableElement()
-          : findPreviousFoccusableElement();
+          ? findNextFoccusableElement(true)
+          : findPreviousFoccusableElement(true);
 
       focusElementIfFound(nextFoccusableElement);
     }
 
     function handleArrowUp(opt) {
       let cycle = true;
-      if (opt && opt.cycle && typeof opt.cycle === "boolean") {
+      if (opt && typeof opt.cycle === "boolean") {
         cycle = opt.cycle;
       }
-      const nextFoccusableElement = findPreviousFoccusableElement();
+      const nextFoccusableElement = findPreviousFoccusableElement(cycle);
       focusElementIfFound(nextFoccusableElement);
     }
 
     function handleArrowDown(opt) {
       let cycle = true;
-      if (opt && opt.cycle && typeof opt.cycle === "boolean") {
+      if (opt && typeof opt.cycle === "boolean") {
         cycle = opt.cycle;
       }
-      const nextFoccusableElement = findNextFoccusableElement();
+      // console.log("cycle", cycle);
+      const nextFoccusableElement = findNextFoccusableElement(cycle);
       focusElementIfFound(nextFoccusableElement);
     }
 
