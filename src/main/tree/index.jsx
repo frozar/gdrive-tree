@@ -52,12 +52,35 @@ const Tree = ({ id, setParentHeight }) => {
     }
   }
 
-  // TODO : maybe delete the "isExpanded" dataset from the DOM
-  function findExpandableParentElement(element) {
-    return findParentElementWithPredicat(
+  function findChildElementWithPredicat(element, predicat) {
+    const children = element.children;
+
+    for (let i = 0; i < children.length; ++i) {
+      const child = children.item(i);
+      if (predicat(child)) {
+        return child;
+      } else {
+        const res = findChildElementWithPredicat(child, predicat);
+        if (res) {
+          return res;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function findNearestLowerFoccusableElement(element) {
+    const parentElementWithTabIndex = findChildElementWithPredicat(
       element,
-      (element) => element.dataset.isExpanded !== undefined
+      (element) => element.getAttribute("tabindex") !== null
     );
+
+    if (parentElementWithTabIndex) {
+      return parentElementWithTabIndex;
+    } else {
+      return new Error(`Cannot find parent id for element ${element}`);
+    }
   }
 
   function findNearestUpperId(element) {
@@ -70,7 +93,9 @@ const Tree = ({ id, setParentHeight }) => {
     if (parentElementWithId) {
       return parentElementWithId.getAttribute("id");
     } else {
-      return new Error(`Cannot find parent id for element ${element}`);
+      console.info("Cannot find parent id for element");
+      console.info(element);
+      return null;
     }
   }
 
@@ -80,6 +105,9 @@ const Tree = ({ id, setParentHeight }) => {
     );
     const nextTabbableElement = resTabbable[indexNextTabbableElement];
     const nereastId = findNearestUpperId(nextTabbableElement);
+    if (nereastId === null) {
+      return null;
+    }
     const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
 
     // Check if every parent element is expanded, so visible
@@ -121,6 +149,14 @@ const Tree = ({ id, setParentHeight }) => {
   }
 
   function handleKeyDown(event) {
+    function focusElementIfFound(nextFoccusableElement) {
+      if (nextFoccusableElement === null) {
+        return;
+      }
+
+      nextFoccusableElement.focus();
+    }
+
     if (event.code === "Tab") {
       event.preventDefault();
 
@@ -129,60 +165,78 @@ const Tree = ({ id, setParentHeight }) => {
           ? findNextFoccusableElement()
           : findPreviousFoccusableElement();
 
-      if (nextFoccusableElement === null) {
-        return;
-      }
+      focusElementIfFound(nextFoccusableElement);
+    }
 
-      nextFoccusableElement.focus();
+    function handleArrowUp() {
+      const nextFoccusableElement = findPreviousFoccusableElement();
+      focusElementIfFound(nextFoccusableElement);
+    }
+
+    function handleArrowDown() {
+      const nextFoccusableElement = findNextFoccusableElement();
+      focusElementIfFound(nextFoccusableElement);
     }
 
     if (event.code === "ArrowUp") {
       event.preventDefault();
 
-      const nextFoccusableElement = findPreviousFoccusableElement();
-
-      if (nextFoccusableElement === null) {
-        return;
-      }
-
-      nextFoccusableElement.focus();
+      handleArrowUp();
     }
 
     if (event.code === "ArrowDown") {
       event.preventDefault();
 
-      const nextFoccusableElement = findNextFoccusableElement();
-
-      if (nextFoccusableElement === null) {
-        return;
-      }
-
-      nextFoccusableElement.focus();
+      handleArrowDown();
     }
 
-    function setExpand(expandValue) {
-      const id = findNearestUpperId(document.activeElement);
-      const node = getNodeById(store.nodes.rootNode, id);
-
-      if (isFolder(node)) {
-        setNodeInStoreById(id, {
-          isExpanded: expandValue,
-        });
-      }
-    }
-
-    // TODO : go to the first sub-element if the node is already expanded
     if (event.code === "ArrowRight") {
       event.preventDefault();
 
-      setExpand(true);
+      const id = findNearestUpperId(document.activeElement);
+      if (id === null) {
+        return;
+      }
+      const node = getNodeById(store.nodes.rootNode, id);
+
+      if (isFolder(node) && !node.isExpanded) {
+        setNodeInStoreById(id, {
+          isExpanded: true,
+        });
+      } else if (isFolder(node)) {
+        handleArrowDown();
+      }
     }
 
-    // TODO : go to the parent element if the node is not expanded
     if (event.code === "ArrowLeft") {
       event.preventDefault();
 
-      setExpand(false);
+      const id = findNearestUpperId(document.activeElement);
+      if (id === null) {
+        return;
+      }
+      const node = getNodeById(store.nodes.rootNode, id);
+
+      if (isFolder(node) && node.isExpanded) {
+        // Retract the folder
+        setNodeInStoreById(id, {
+          isExpanded: false,
+        });
+      } else {
+        // Focus the parent folder
+        const element = document.getElementById(id);
+        const parentId = findNearestUpperId(element.parentElement);
+
+        // If no parent is was found, escape
+        if (parentId === null) {
+          return;
+        }
+
+        const parentElement = document.getElementById(parentId);
+        const childFoccusable =
+          findNearestLowerFoccusableElement(parentElement);
+        childFoccusable.focus();
+      }
     }
   }
 
