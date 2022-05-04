@@ -3,7 +3,12 @@ import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 import { tabbable } from "tabbable";
 
 import Node from "./Node";
-import { setNodeInStoreById, getNodeById, isFolder } from "./node";
+import {
+  setNodeInStoreById,
+  getNodeById,
+  isFolder,
+  getNodePathById,
+} from "./node";
 import { store } from "../../index";
 
 // TODO : erase the 'setParentHeight' function and store the
@@ -69,19 +74,20 @@ const Tree = ({ id, setParentHeight }) => {
     }
   }
 
-  // TODO: check if element is visible
   function findFoccusableElement(resTabbable, indexTabbableElement, increment) {
     const indexNextTabbableElement = (indexTabbableElement + increment).mod(
       resTabbable.length
     );
     const nextTabbableElement = resTabbable[indexNextTabbableElement];
-    const parentElement = findExpandableParentElement(nextTabbableElement);
+    const nereastId = findNearestUpperId(nextTabbableElement);
+    const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
 
-    if (parentElement === null) {
-      return null;
-    }
-
-    if (parentElement.dataset.isExpanded === "true") {
+    // Check if every parent element is expanded, so visible
+    if (
+      !nodePath
+        .slice(0, nodePath.length - 1)
+        .some((n) => n.isExpanded === false)
+    ) {
       return nextTabbableElement;
     } else {
       return findFoccusableElement(

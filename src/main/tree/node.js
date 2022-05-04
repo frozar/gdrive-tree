@@ -2,16 +2,18 @@ import { unwrap, produce } from "solid-js/store";
 
 import { setStore } from "../../index";
 
-function findNodeKeyByPredicat(root, predicat) {
+function getNodePathKeyByPredicat(root, predicat) {
   const nodesToVisit = [{ ...root }];
 
   const key = [];
+  const nodePath = [];
   const lengthStack = [nodesToVisit.length];
   while (0 < nodesToVisit.length && 0 < lengthStack.length) {
     let currentNode = nodesToVisit.pop();
+    nodePath.push(currentNode);
 
     if (predicat(currentNode)) {
-      return [currentNode, key];
+      return [nodePath, key];
     }
 
     if (currentNode.subNodes) {
@@ -20,9 +22,12 @@ function findNodeKeyByPredicat(root, predicat) {
       key.push(0);
       continue;
     }
+
+    nodePath.pop();
     key[key.length - 1]++;
 
     if (lengthStack.at(-1) <= key.at(-1)) {
+      nodePath.pop();
       key.pop();
       lengthStack.pop();
       if (0 < key.length) {
@@ -36,8 +41,8 @@ function findNodeKeyByPredicat(root, predicat) {
   return null;
 }
 
-function findNodeKeyById(root, id) {
-  const res = findNodeKeyByPredicat(root, (n) => n.id === id);
+function getNodePathKeyById(root, id) {
+  const res = getNodePathKeyByPredicat(root, (n) => n.id === id);
 
   if (res) {
     return res;
@@ -49,37 +54,36 @@ function findNodeKeyById(root, id) {
 }
 
 // // Test of findKey()
-// console.log("test [0],", findKeyById([{ id: "0" }], "0"));
-// console.log("test [],", findKeyById({ id: "root" }, "root"));
-// console.log("test null,", findKeyById({ id: "root" }, "0"));
+// console.log("test [],", findNodesKeyById({ id: "root" }, "root")[1]);
 // console.log(
 //   "test [0],",
-//   findKeyById({ id: "root", subNodes: [{ id: "0" }] }, "0")
+//   findNodesKeyById({ id: "root", subNodes: [{ id: "0" }] }, "0")[1]
 // );
+// console.log("test null,", findNodesKeyById({ id: "root" }, "0"));
 // console.log(
 //   "test [1],",
-//   findKeyById({ id: "root", subNodes: [{ id: "0" }, { id: "1" }] }, "1")
+//   findNodesKeyById({ id: "root", subNodes: [{ id: "0" }, { id: "1" }] }, "1")[1]
 // );
 // console.log(
-//   "test [0, 0],",
-//   findKeyById(
+//   "test [0, 0]",
+//   findNodesKeyById(
 //     { id: "root", subNodes: [{ id: "0", subNodes: [{ id: "00" }] }] },
 //     "00"
-//   )
+//   )[1]
 // );
 // console.log(
 //   "test [0, 1],",
-//   findKeyById(
+//   findNodesKeyById(
 //     {
 //       id: "root",
 //       subNodes: [{ id: "0", subNodes: [{ id: "00" }, { id: "01" }] }],
 //     },
 //     "01"
-//   )
+//   )[1]
 // );
 // console.log(
 //   "test [1, 0],",
-//   findKeyById(
+//   findNodesKeyById(
 //     {
 //       id: "root",
 //       subNodes: [
@@ -88,11 +92,11 @@ function findNodeKeyById(root, id) {
 //       ],
 //     },
 //     "10"
-//   )
+//   )[1]
 // );
 // console.log(
 //   "test Error,",
-//   findKeyById(
+//   findNodesKeyById(
 //     {
 //       id: "root",
 //       subNodes: [
@@ -105,7 +109,7 @@ function findNodeKeyById(root, id) {
 // );
 // console.log(
 //   "test [0, 1],",
-//   findKeyById(
+//   findNodesKeyById(
 //     {
 //       id: "root",
 //       subNodes: [
@@ -115,11 +119,11 @@ function findNodeKeyById(root, id) {
 //       ],
 //     },
 //     "01"
-//   )
+//   )[1]
 // );
 // console.log(
 //   "test [1, 0],",
-//   findKeyById(
+//   findNodesKeyById(
 //     {
 //       id: "root",
 //       subNodes: [
@@ -129,11 +133,11 @@ function findNodeKeyById(root, id) {
 //       ],
 //     },
 //     "10"
-//   )
+//   )[1]
 // );
 // console.log(
 //   "test [2],",
-//   findKeyById(
+//   findNodesKeyById(
 //     {
 //       id: "root",
 //       subNodes: [
@@ -143,7 +147,7 @@ function findNodeKeyById(root, id) {
 //       ],
 //     },
 //     "2"
-//   )
+//   )[1]
 // );
 
 function itereOverNodes(rootNode, key) {
@@ -154,20 +158,24 @@ function itereOverNodes(rootNode, key) {
   return targetNode;
 }
 
-export function getNodeById(rootNode, id) {
-  const [node, _] = findNodeKeyById(rootNode, id);
+export function getNodePathById(rootNode, id) {
+  const [nodePath, _] = getNodePathKeyById(rootNode, id);
+  return nodePath;
+}
 
-  return node;
+export function getNodeById(rootNode, id) {
+  const [nodePath, _] = getNodePathKeyById(rootNode, id);
+  return nodePath.pop();
 }
 
 export function getParentNodeById(rootNode, id) {
-  const [_, key] = findNodeKeyById(rootNode, id);
+  const [nodePath, _] = getNodePathKeyById(rootNode, id);
+  nodePath.pop();
 
-  if (key.length === 0) {
+  if (nodePath.length === 0) {
     return null;
   } else {
-    key.pop();
-    return itereOverNodes(rootNode, key);
+    return nodePath.pop();
   }
 }
 
