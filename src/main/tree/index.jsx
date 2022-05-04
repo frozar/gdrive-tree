@@ -52,12 +52,35 @@ const Tree = ({ id, setParentHeight }) => {
     }
   }
 
-  // TODO : maybe delete the "isExpanded" dataset from the DOM
-  function findExpandableParentElement(element) {
-    return findParentElementWithPredicat(
+  function findChildElementWithPredicat(element, predicat) {
+    const children = element.children;
+
+    for (let i = 0; i < children.length; ++i) {
+      const child = children.item(i);
+      if (predicat(child)) {
+        return child;
+      } else {
+        const res = findChildElementWithPredicat(child, predicat);
+        if (res) {
+          return res;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function findNearestLowerFoccusableElement(element) {
+    const parentElementWithTabIndex = findChildElementWithPredicat(
       element,
-      (element) => element.dataset.isExpanded !== undefined
+      (element) => element.getAttribute("tabindex") !== null
     );
+
+    if (parentElementWithTabIndex) {
+      return parentElementWithTabIndex;
+    } else {
+      return new Error(`Cannot find parent id for element ${element}`);
+    }
   }
 
   function findNearestUpperId(element) {
@@ -70,16 +93,29 @@ const Tree = ({ id, setParentHeight }) => {
     if (parentElementWithId) {
       return parentElementWithId.getAttribute("id");
     } else {
-      return new Error(`Cannot find parent id for element ${element}`);
+      console.info("Cannot find parent id for element");
+      console.info(element);
+      return null;
     }
   }
 
-  function findFoccusableElement(resTabbable, indexTabbableElement, increment) {
-    const indexNextTabbableElement = (indexTabbableElement + increment).mod(
-      resTabbable.length
-    );
+  function findFoccusableElement(
+    resTabbable,
+    indexTabbableElement,
+    increment,
+    cycle
+  ) {
+    const indexNextTabbableElement = cycle
+      ? (indexTabbableElement + increment).mod(resTabbable.length)
+      : Math.max(
+          0,
+          Math.min(indexTabbableElement + increment, resTabbable.length - 1)
+        );
     const nextTabbableElement = resTabbable[indexNextTabbableElement];
     const nereastId = findNearestUpperId(nextTabbableElement);
+    if (nereastId === null) {
+      return null;
+    }
     const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
 
     // Check if every parent element is expanded, so visible
@@ -93,7 +129,8 @@ const Tree = ({ id, setParentHeight }) => {
       return findFoccusableElement(
         resTabbable,
         indexNextTabbableElement,
-        increment
+        increment,
+        cycle
       );
     }
   }
@@ -102,87 +139,175 @@ const Tree = ({ id, setParentHeight }) => {
     return tabbable(treeContainerRef);
   }
 
-  function findNextFoccusableElement() {
+  function findNextFoccusableElement(cycle) {
     const resTabbable = getTabbableElement();
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
     }
-    return findFoccusableElement(resTabbable, indexTabbableElement, +1);
+    return findFoccusableElement(resTabbable, indexTabbableElement, +1, cycle);
   }
 
-  function findPreviousFoccusableElement() {
+  function findPreviousFoccusableElement(cycle) {
     const resTabbable = getTabbableElement();
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
     }
-    return findFoccusableElement(resTabbable, indexTabbableElement, -1);
+    return findFoccusableElement(resTabbable, indexTabbableElement, -1, cycle);
   }
 
   function handleKeyDown(event) {
+    function focusElementIfFound(nextFoccusableElement) {
+      if (nextFoccusableElement === null) {
+        return;
+      }
+
+      nextFoccusableElement.focus();
+    }
+
     if (event.code === "Tab") {
       event.preventDefault();
 
       const nextFoccusableElement =
         event.shiftKey === false
-          ? findNextFoccusableElement()
-          : findPreviousFoccusableElement();
+          ? findNextFoccusableElement(true)
+          : findPreviousFoccusableElement(true);
 
-      if (nextFoccusableElement === null) {
-        return;
+      focusElementIfFound(nextFoccusableElement);
+    }
+
+    function handleArrowUp(opt) {
+      let cycle = true;
+      if (opt && typeof opt.cycle === "boolean") {
+        cycle = opt.cycle;
       }
+      const nextFoccusableElement = findPreviousFoccusableElement(cycle);
+      focusElementIfFound(nextFoccusableElement);
+    }
 
-      nextFoccusableElement.focus();
+    function handleArrowDown(opt) {
+      let cycle = true;
+      if (opt && typeof opt.cycle === "boolean") {
+        cycle = opt.cycle;
+      }
+      // console.log("cycle", cycle);
+      const nextFoccusableElement = findNextFoccusableElement(cycle);
+      focusElementIfFound(nextFoccusableElement);
     }
 
     if (event.code === "ArrowUp") {
       event.preventDefault();
 
-      const nextFoccusableElement = findPreviousFoccusableElement();
-
-      if (nextFoccusableElement === null) {
-        return;
-      }
-
-      nextFoccusableElement.focus();
+      handleArrowUp();
     }
 
     if (event.code === "ArrowDown") {
       event.preventDefault();
 
-      const nextFoccusableElement = findNextFoccusableElement();
+      handleArrowDown();
+    }
 
-      if (nextFoccusableElement === null) {
+    if (event.code === "ArrowRight") {
+      event.preventDefault();
+
+      const id = findNearestUpperId(document.activeElement);
+      if (id === null) {
+        return;
+      }
+      const node = getNodeById(store.nodes.rootNode, id);
+
+      if (isFolder(node) && !node.isExpanded) {
+        setNodeInStoreById(id, {
+          isExpanded: true,
+        });
+      } else if (isFolder(node)) {
+        handleArrowDown();
+      }
+    }
+
+    if (event.code === "ArrowLeft") {
+      event.preventDefault();
+
+      const id = findNearestUpperId(document.activeElement);
+      if (id === null) {
+        return;
+      }
+      const node = getNodeById(store.nodes.rootNode, id);
+
+      if (isFolder(node) && node.isExpanded) {
+        // Retract the folder
+        setNodeInStoreById(id, {
+          isExpanded: false,
+        });
+      } else {
+        // Focus the parent folder
+        const element = document.getElementById(id);
+        const parentId = findNearestUpperId(element.parentElement);
+
+        // If no parent is was found, escape
+        if (parentId === null) {
+          return;
+        }
+
+        const parentElement = document.getElementById(parentId);
+        const childFoccusable =
+          findNearestLowerFoccusableElement(parentElement);
+        childFoccusable.focus();
+      }
+    }
+
+    if (event.code === "Enter") {
+      event.preventDefault();
+
+      const id = findNearestUpperId(document.activeElement);
+      if (id === null) {
+        return;
+      }
+      const node = getNodeById(store.nodes.rootNode, id);
+      if (isFolder(node)) {
+        if (!node.isExpanded) {
+          setNodeInStoreById(id, {
+            isExpanded: true,
+          });
+        }
+      } else {
+        window.open(node.webViewLink, "_blank").focus();
+      }
+    }
+
+    if (event.code === "Space") {
+      event.preventDefault();
+
+      const id = findNearestUpperId(document.activeElement);
+      if (id === null) {
         return;
       }
 
-      nextFoccusableElement.focus();
-    }
-
-    function setExpand(expandValue) {
-      const id = findNearestUpperId(document.activeElement);
       const node = getNodeById(store.nodes.rootNode, id);
-
       if (isFolder(node)) {
         setNodeInStoreById(id, {
-          isExpanded: expandValue,
+          isExpanded: !node.isExpanded,
         });
       }
     }
 
-    // TODO : go to the first sub-element if the node is already expanded
-    if (event.code === "ArrowRight") {
+    const nbMovePage = 10;
+
+    if (event.code === "PageUp") {
       event.preventDefault();
 
-      setExpand(true);
+      for (const _ of Array(nbMovePage).keys()) {
+        handleArrowUp({ cycle: false });
+      }
     }
 
-    // TODO : go to the parent element if the node is not expanded
-    if (event.code === "ArrowLeft") {
+    if (event.code === "PageDown") {
       event.preventDefault();
 
-      setExpand(false);
+      for (const _ of Array(nbMovePage).keys()) {
+        handleArrowDown({ cycle: false });
+      }
     }
   }
 
