@@ -218,7 +218,7 @@ export function isFolder(node) {
 export function getRicherNodes(nodes) {
   return [...nodes].map((n) => {
     if (isFolder(n)) {
-      return { ...n, subNodes: null, isExpanded: false };
+      return { ...n, subNodes: null, isExpanded: false, height: 0 };
     } else {
       return { ...n };
     }

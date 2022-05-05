@@ -1,4 +1,3 @@
-// @refresh reload
 import { render } from "solid-js/web";
 import { createStore } from "solid-js/store";
 import { Router } from "solid-app-router";
@@ -11,7 +10,13 @@ const defaultStore = {
   isExternalLibLoaded: false,
   hasCredential: false,
   nodes: {
-    rootNode: { id: "root", isExpanded: true, subNodes: null },
+    rootNode: {
+      id: "root",
+      name: "ROOT",
+      isExpanded: true,
+      subNodes: null,
+      height: 0,
+    },
     isInitialised: false,
     isLoading: false,
   },
@@ -19,7 +24,8 @@ const defaultStore = {
 
 export const [store, setStore] = createStore(defaultStore);
 
-const cleanup = render(() => {
+// const cleanup =
+render(() => {
   return (
     <Router>
       <App />
@@ -32,5 +38,6 @@ const cleanup = render(() => {
 
 if (import.meta.hot) {
   console.log("Hot reload");
-  import.meta.hot.dispose(cleanup);
+  // import.meta.hot.accept();
+  // import.meta.hot.dispose(cleanup);
 }
