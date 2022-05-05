@@ -1,6 +1,12 @@
 const File = ({ node, mustAutofocus }) => {
   return (
-    <li id={node.id} class="pt-1">
+    <li
+      id={node.id}
+      class="py-1"
+      onClick={(e) => {
+        e.currentTarget.children.item(0).focus();
+      }}
+    >
       <span
         class="selectable file"
         tabindex="0"

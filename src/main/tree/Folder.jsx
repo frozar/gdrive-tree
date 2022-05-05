@@ -222,7 +222,14 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   });
 
   return (
-    <li id={node.id} class="pt-1">
+    <li
+      id={node.id}
+      // class="py-1"
+      class="pt-1"
+      onClick={(e) => {
+        e.currentTarget.children.item(0).children.item(1).focus();
+      }}
+    >
       <span class="folder-surrounding-span">
         <ArrowIcon id={node.id} toggleExpanded={toggleExpanded} />
         <span

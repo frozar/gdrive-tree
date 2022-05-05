@@ -137,3 +137,12 @@ min-height: calc(100% - 2rem); */
   align-items: center;
   height: calc(100% - 2rem);
 }
+
+li {
+  background: unset;
+  transition: background 0.150s ease;
+}
+
+li:hover {
+  background: #fafacc;
+}
