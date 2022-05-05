@@ -1,4 +1,5 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
+import { unwrap } from "solid-js/store";
 
 import { tabbable } from "tabbable";
 
@@ -9,11 +10,13 @@ import {
   isFolder,
   getNodePathById,
 } from "./node";
+import {
+  findParentElementWithPredicat,
+  findChildElementWithPredicat,
+} from "./htmlElement";
 import { store } from "../../index";
 
-// TODO : erase the 'setParentHeight' function and store the
-// height of a node in a richer node.
-const Tree = ({ id, setParentHeight }) => {
+const Tree = ({ id }) => {
   const isRoot = id === "root";
 
   const nodes = () => {
@@ -34,41 +37,17 @@ const Tree = ({ id, setParentHeight }) => {
     }
   };
 
-  const [height, setHeight] = createSignal({ value: 0, overwrite: false });
+  const height = () => {
+    const foundNode = getNodeById(store.nodes.rootNode, id);
+    if (foundNode) {
+      return foundNode.height;
+    } else {
+      return 0;
+    }
+  };
 
   let treeContainerRef;
   let treeRef;
-
-  function findParentElementWithPredicat(element, predicat) {
-    const parentElement = element.parentElement;
-    if (!parentElement) {
-      return null;
-    }
-
-    if (predicat(parentElement)) {
-      return parentElement;
-    } else {
-      return findParentElementWithPredicat(parentElement, predicat);
-    }
-  }
-
-  function findChildElementWithPredicat(element, predicat) {
-    const children = element.children;
-
-    for (let i = 0; i < children.length; ++i) {
-      const child = children.item(i);
-      if (predicat(child)) {
-        return child;
-      } else {
-        const res = findChildElementWithPredicat(child, predicat);
-        if (res) {
-          return res;
-        }
-      }
-    }
-
-    return null;
-  }
 
   function findNearestLowerFoccusableElement(element) {
     const parentElementWithTabIndex = findChildElementWithPredicat(
@@ -118,7 +97,7 @@ const Tree = ({ id, setParentHeight }) => {
     }
     const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
 
-    // Check if every parent element is expanded, so visible
+    // Check if every parent elements are expanded, so visible
     if (
       !nodePath
         .slice(0, nodePath.length - 1)
@@ -328,54 +307,8 @@ const Tree = ({ id, setParentHeight }) => {
   });
 
   onCleanup(() => {
-    treeContainerRef.removeEventListener("keydown", handleKeyDown);
-  });
-
-  createEffect(() => {
-    // console.log("BEF treeContainerRef.dataset", treeContainerRef.dataset);
     if (isRoot) {
-      treeContainerRef.dataset.isExpanded = "true";
-    } else {
-      treeContainerRef.dataset.isExpanded = isExpanded() ? "true" : "false";
-      // treeContainerRef.dataset.isExpanded = isExpanded ? "true" : "false";
-    }
-    // console.log("AFT treeContainerRef.dataset", treeContainerRef.dataset);
-  });
-
-  // Update the height signal of this Tree component
-  // When the Tree is expanded, the height is updated in two cases:
-  // 1. If not overwrite, the content of the tree is taken into account
-  // 2. Else, the height of the current tree has been set by a sub-tree
-  createEffect(() => {
-    if (!isRoot) {
-      if (isExpanded()) {
-        // if (isExpanded) {
-        if (!height().overwrite) {
-          const currentElementHeight = treeRef.getBoundingClientRect().height;
-          if (height().value !== currentElementHeight) {
-            // console.log("00 name", name);
-            // console.log("00 height()", height().value);
-            // console.log("00 currentMaxHeight", currentElementHeight);
-            setHeight((height) => ({ ...height, value: currentElementHeight }));
-            setParentHeight((parentHeight) => ({
-              ...parentHeight,
-              value: parentHeight.value + currentElementHeight,
-              overwrite: true,
-            }));
-          }
-        }
-      } else {
-        if (height().value !== 0) {
-          // console.log("01 name", name);
-          // console.log("01 height()", height().value);
-          setParentHeight((parentHeight) => ({
-            ...parentHeight,
-            value: parentHeight.value - height().value,
-            overwrite: true,
-          }));
-          setHeight((height) => ({ ...height, value: 0, overwrite: false }));
-        }
-      }
+      treeContainerRef.removeEventListener("keydown", handleKeyDown);
     }
   });
 
@@ -383,8 +316,7 @@ const Tree = ({ id, setParentHeight }) => {
   //  -> trigger the animation for the height of the container
   createEffect(() => {
     if (!isRoot) {
-      // console.log("1  height()", height().value);
-      treeContainerRef.style["height"] = `${height().value}px`;
+      treeContainerRef.style["height"] = `${height()}px`;
     }
   });
 
@@ -394,7 +326,6 @@ const Tree = ({ id, setParentHeight }) => {
   createEffect(() => {
     if (!isRoot) {
       if (isExpanded()) {
-        // if (isExpanded) {
         treeRef.classList.add("tree--open");
       } else {
         treeRef.classList.remove("tree--open");
@@ -423,13 +354,7 @@ const Tree = ({ id, setParentHeight }) => {
           <For each={nodes()}>
             {(node, nodeIndex) => {
               const mustAutofocus = isRoot && nodeIndex() === 0;
-              return (
-                <Node
-                  node={node}
-                  setHeight={setHeight}
-                  mustAutofocus={mustAutofocus}
-                />
-              );
+              return <Node node={node} mustAutofocus={mustAutofocus} />;
             }}
           </For>
         </ul>

@@ -1,4 +1,5 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
+import { unwrap } from "solid-js/store";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
 import Tree from "./index";
@@ -7,7 +8,11 @@ import {
   getNodeById,
   getParentNodeById,
   getRicherNodes,
+  getNodePathById,
+  isFolder,
 } from "./node";
+import { findChildElementWithPredicat } from "./htmlElement";
+
 import SpinningWheel from "../../SpinningWheel";
 import { store } from "../../index";
 
@@ -91,10 +96,93 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
 
   function toggleExpanded() {
     setNodeInStoreById(node.id, (obj) => ({
-      ...obj,
       isExpanded: !obj.isExpanded,
     }));
   }
+
+  createEffect(() => {
+    const verbose = false;
+    function getTreeRef(id) {
+      const parentLi = document.getElementById(id);
+      if (verbose) {
+        console.log("id", id);
+        console.log("parentLi", parentLi);
+      }
+      if (parentLi === null) {
+        return null;
+      }
+      const childUl = findChildElementWithPredicat(
+        parentLi,
+        (element) => element.tagName === "UL"
+      );
+      if (verbose) {
+        console.log("childUl", childUl);
+        if (childUl !== null) {
+          console.log("childUl.parentElement", childUl.parentElement);
+        }
+      }
+      if (childUl === null) {
+        return null;
+      }
+
+      return childUl.parentElement;
+    }
+
+    function setNodeHeight(id, toExpand) {
+      const treeRef = getTreeRef(id);
+      if (treeRef === null) {
+        return null;
+      }
+      const currentElementHeight = treeRef.getBoundingClientRect().height;
+
+      let hasUpdated = false;
+      const node = getNodeById(store.nodes.rootNode, id);
+      if (node.height === 0 && toExpand) {
+        setNodeInStoreById(id, { height: currentElementHeight });
+        hasUpdated = true;
+      } else if (node.height !== 0 && !toExpand) {
+        setNodeInStoreById(id, { height: 0 });
+        hasUpdated = true;
+      }
+
+      return [hasUpdated, currentElementHeight];
+    }
+
+    function updateNodeHeight(id, incrementHeight) {
+      const treeRef = getTreeRef(id);
+      if (treeRef === null) {
+        return;
+      }
+
+      setNodeInStoreById(id, (obj) => ({
+        height: obj.height + incrementHeight,
+      }));
+    }
+
+    const nodePath = getNodePathById(store.nodes.rootNode, node.id);
+    if (!isFolder(nodePath[nodePath.length - 1])) {
+      return;
+    }
+
+    nodePath.shift();
+    const startNode = nodePath.pop();
+    const res = setNodeHeight(startNode.id, node.isExpanded);
+
+    if (res === null) {
+      return;
+    }
+
+    const [hasUpdated, startNodeHeight] = res;
+    if (hasUpdated) {
+      while (nodePath.length) {
+        const currentNode = nodePath.pop();
+        updateNodeHeight(
+          currentNode.id,
+          node.isExpanded ? startNodeHeight : -startNodeHeight
+        );
+      }
+    }
+  });
 
   const isParentExpanded = () => {
     const parentNode = getParentNodeById(store.nodes.rootNode, node.id);
