@@ -10,7 +10,7 @@ const NavBar = () => {
 
   createEffect(() => {
     if (store.hasCredential) {
-      setButtonStyle(() => "btn-secondary");
+      setButtonStyle(() => "");
     } else {
       setButtonStyle(() => "btn-disabled");
     }
