@@ -106,6 +106,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   };
 
   function toggleExpanded() {
+    console.log("toggleExpanded");
     setNodeInStoreById(node.id, (obj) => ({
       // ...obj,
       isExpanded: !obj.isExpanded,
@@ -172,14 +173,14 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
     // }
   }
 
-  const isExpanded = () => {
-    const foundNode = getNodeById(store.nodes.rootNode, node.id);
-    if (foundNode) {
-      return foundNode.isExpanded;
-    } else {
-      return false;
-    }
-  };
+  // const isExpanded = () => {
+  //   const foundNode = getNodeById(store.nodes.rootNode, node.id);
+  //   if (foundNode) {
+  //     return foundNode.isExpanded;
+  //   } else {
+  //     return false;
+  //   }
+  // };
 
   createEffect(() => {
     function getTreeRef(id, verbose) {
@@ -262,7 +263,9 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
     const startNode = nodePath.pop();
     // const startNodeHeight = setNodeHeight(startNode.id, !isExpanded);
     // const startNodeHeight = setNodeHeight(startNode.id, !isExpanded());
-    const res = setNodeHeight(startNode.id, isExpanded());
+    // const res = setNodeHeight(startNode.id, isExpanded());
+    // const res = setNodeHeight(startNode.id, startNode.isExpanded);
+    const res = setNodeHeight(startNode.id, node.isExpanded);
 
     // console.log("res", res);
     if (res === null) {
@@ -278,7 +281,8 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
           currentNode.id,
           // isExpanded ? -startNodeHeight : startNodeHeight
           // isExpanded() ? -startNodeHeight : startNodeHeight
-          isExpanded() ? startNodeHeight : -startNodeHeight
+          // isExpanded() ? startNodeHeight : -startNodeHeight
+          node.isExpanded ? startNodeHeight : -startNodeHeight
         );
       }
     }

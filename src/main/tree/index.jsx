@@ -101,6 +101,11 @@ const Tree = ({ id }) => {
       return null;
     }
     const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
+    // console.log("nodePath RAW", nodePath);
+    // console.log(
+    //   "nodePath NAME",
+    //   nodePath.map((n) => unwrap(n).name)
+    // );
 
     // Check if every parent element is expanded, so visible
     if (
@@ -125,6 +130,7 @@ const Tree = ({ id }) => {
 
   function findNextFoccusableElement(cycle) {
     const resTabbable = getTabbableElement();
+    // console.log("resTabbable", resTabbable);
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
