@@ -134,18 +134,22 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
         return null;
       }
       const currentElementHeight = treeRef.getBoundingClientRect().height;
+      // The 'heightOffset' gives enough space to avoid the focus border
+      // to be cropped on the last element of a folder.
+      const heightOffset = 3;
+      const heightToSet = currentElementHeight + heightOffset;
 
       let hasUpdated = false;
       const node = getNodeById(store.nodes.rootNode, id);
       if (node.height === 0 && toExpand) {
-        setNodeInStoreById(id, { height: currentElementHeight });
+        setNodeInStoreById(id, { height: heightToSet });
         hasUpdated = true;
       } else if (node.height !== 0 && !toExpand) {
         setNodeInStoreById(id, { height: 0 });
         hasUpdated = true;
       }
 
-      return [hasUpdated, currentElementHeight];
+      return [hasUpdated, heightToSet];
     }
 
     function updateNodeHeight(id, incrementHeight) {
@@ -218,7 +222,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   });
 
   return (
-    <li id={node.id}>
+    <li id={node.id} class="pt-1">
       <span class="folder-surrounding-span">
         <ArrowIcon id={node.id} toggleExpanded={toggleExpanded} />
         <span
