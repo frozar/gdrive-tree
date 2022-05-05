@@ -11,10 +11,7 @@ import {
   getNodePathById,
   isFolder,
 } from "./node";
-import {
-  findParentElementWithPredicat,
-  findChildElementWithPredicat,
-} from "./htmlElement";
+import { findChildElementWithPredicat } from "./htmlElement";
 
 import SpinningWheel from "../../SpinningWheel";
 import { store } from "../../index";
@@ -92,98 +89,20 @@ async function fetchSubNodes(id, fetchState, setFetchState) {
 
 const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   const [fetchState, setFetchState] = createSignal("init");
-  // const [isMounted, setIsMounted] = createSignal(false);
-
-  // onMount(() => {
-  //   if (!isMounted()) {
-  //     setIsMounted(true);
-  //     console.log("isMounted DONE");
-  //   }
-  // });
 
   const SmallSpinningWheel = () => {
     return <SpinningWheel size="small" className="ml-2" />;
   };
 
   function toggleExpanded() {
-    console.log("toggleExpanded");
     setNodeInStoreById(node.id, (obj) => ({
-      // ...obj,
       isExpanded: !obj.isExpanded,
     }));
-    // function getTreeRef(id) {
-    //   const parentLi = document.getElementById(id);
-    //   if (parentLi === null) {
-    //     return null;
-    //   }
-    //   const childUl = findChildElementWithPredicat(
-    //     parentLi,
-    //     (element) => element.tagName === "UL"
-    //   );
-    //   if (childUl === null) {
-    //     return null;
-    //   }
-
-    //   return childUl.parentElement;
-    // }
-
-    // function setNodeHeight(id, toExpand) {
-    //   const treeRef = getTreeRef(id);
-    //   if (treeRef === null) {
-    //     return;
-    //   }
-    //   // console.log("0 treeRef", treeRef);
-    //   const currentElementHeight = treeRef.getBoundingClientRect().height;
-
-    //   setNodeInStoreById(id, (obj) => ({
-    //     ...obj,
-    //     isExpanded: !obj.isExpanded,
-    //     height: toExpand ? currentElementHeight : 0,
-    //   }));
-
-    //   return currentElementHeight;
-    // }
-
-    // function updateNodeHeight(id, incrementHeight) {
-    //   const treeRef = getTreeRef(id);
-    //   if (treeRef === null) {
-    //     return;
-    //   }
-    //   // console.log("1 treeRef", treeRef);
-
-    //   setNodeInStoreById(id, (obj) => ({
-    //     ...obj,
-    //     height: obj.height + incrementHeight,
-    //   }));
-    // }
-    // const isExpanded = unwrap(node.isExpanded);
-
-    // const nodePath = getNodePathById(store.nodes.rootNode, node.id);
-
-    // nodePath.shift();
-    // const startNode = nodePath.pop();
-    // const startNodeHeight = setNodeHeight(startNode.id, !isExpanded);
-
-    // while (nodePath.length) {
-    //   const currentNode = nodePath.pop();
-    //   updateNodeHeight(
-    //     currentNode.id,
-    //     isExpanded ? -startNodeHeight : startNodeHeight
-    //   );
-    // }
   }
 
-  // const isExpanded = () => {
-  //   const foundNode = getNodeById(store.nodes.rootNode, node.id);
-  //   if (foundNode) {
-  //     return foundNode.isExpanded;
-  //   } else {
-  //     return false;
-  //   }
-  // };
-
   createEffect(() => {
-    function getTreeRef(id, verbose) {
+    const verbose = false;
+    function getTreeRef(id) {
       const parentLi = document.getElementById(id);
       if (verbose) {
         console.log("id", id);
@@ -210,12 +129,10 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
     }
 
     function setNodeHeight(id, toExpand) {
-      const treeRef = getTreeRef(id, false);
-      // console.log("treeRef", treeRef);
+      const treeRef = getTreeRef(id);
       if (treeRef === null) {
         return null;
       }
-      // console.log("0 treeRef", treeRef);
       const currentElementHeight = treeRef.getBoundingClientRect().height;
 
       let hasUpdated = false;
@@ -236,40 +153,22 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       if (treeRef === null) {
         return;
       }
-      // console.log("1 treeRef", treeRef);
 
       setNodeInStoreById(id, (obj) => ({
-        // ...obj,
         height: obj.height + incrementHeight,
       }));
     }
 
-    // if (!isMounted()) {
-    //   return;
-    // }
-    // const isExpanded = unwrap(node.isExpanded);
-
     const nodePath = getNodePathById(store.nodes.rootNode, node.id);
-    // console.log(
-    //   "nodePath",
-    //   nodePath.map((n) => unwrap(n).name)
-    // );
     if (!isFolder(nodePath[nodePath.length - 1])) {
       return;
     }
 
-    // console.log("isExpanded", isExpanded());
     nodePath.shift();
     const startNode = nodePath.pop();
-    // const startNodeHeight = setNodeHeight(startNode.id, !isExpanded);
-    // const startNodeHeight = setNodeHeight(startNode.id, !isExpanded());
-    // const res = setNodeHeight(startNode.id, isExpanded());
-    // const res = setNodeHeight(startNode.id, startNode.isExpanded);
     const res = setNodeHeight(startNode.id, node.isExpanded);
 
-    // console.log("res", res);
     if (res === null) {
-      // console.log("");
       return;
     }
 
@@ -279,14 +178,10 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
         const currentNode = nodePath.pop();
         updateNodeHeight(
           currentNode.id,
-          // isExpanded ? -startNodeHeight : startNodeHeight
-          // isExpanded() ? -startNodeHeight : startNodeHeight
-          // isExpanded() ? startNodeHeight : -startNodeHeight
           node.isExpanded ? startNodeHeight : -startNodeHeight
         );
       }
     }
-    // console.log("");
   });
 
   const isParentExpanded = () => {
@@ -365,11 +260,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
         {fetchState() === "running" && <SmallSpinningWheel />}
       </span>
       {fetchState() === "done" && (
-        <Tree
-          id={node.id}
-          setParentHeight={setParentHeight}
-          // treeRef={treeRef}
-        />
+        <Tree id={node.id} setParentHeight={setParentHeight} />
       )}
     </li>
   );

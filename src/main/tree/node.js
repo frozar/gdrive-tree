@@ -23,7 +23,6 @@ function getNodePathKeyByPredicat(root, predicat) {
     }
 
     let currentNode = nodesToVisit.pop();
-    // let currentNode = unwrap(nodesToVisit.pop());
     nodePath.push(currentNode);
 
     if (predicat(currentNode)) {

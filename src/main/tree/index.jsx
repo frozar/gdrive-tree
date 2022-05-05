@@ -16,13 +16,8 @@ import {
 } from "./htmlElement";
 import { store } from "../../index";
 
-// TODO : erase the 'setParentHeight' function and store the
-// height of a node in a richer node.
-// const Tree = ({ id, setParentHeight }) => {
 const Tree = ({ id }) => {
   const isRoot = id === "root";
-
-  // const [height, setHeight] = createSignal({ value: 0, overwrite: false });
 
   const nodes = () => {
     const node = getNodeById(store.nodes.rootNode, id);
@@ -101,13 +96,8 @@ const Tree = ({ id }) => {
       return null;
     }
     const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
-    // console.log("nodePath RAW", nodePath);
-    // console.log(
-    //   "nodePath NAME",
-    //   nodePath.map((n) => unwrap(n).name)
-    // );
 
-    // Check if every parent element is expanded, so visible
+    // Check if every parent elements are expanded, so visible
     if (
       !nodePath
         .slice(0, nodePath.length - 1)
@@ -130,7 +120,6 @@ const Tree = ({ id }) => {
 
   function findNextFoccusableElement(cycle) {
     const resTabbable = getTabbableElement();
-    // console.log("resTabbable", resTabbable);
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
@@ -323,115 +312,10 @@ const Tree = ({ id }) => {
     }
   });
 
-  // // Update the height signal of this Tree component
-  // // When the Tree is expanded, the height is updated in two cases:
-  // // 1. If not overwrite, the content of the tree is taken into account
-  // // 2. Else, the height of the current tree has been set by a sub-tree
-  // createEffect(() => {
-  //   if (!isRoot) {
-  //     if (isExpanded()) {
-  //       // if (isExpanded) {
-  //       if (!height().overwrite) {
-  //         const currentElementHeight = treeRef.getBoundingClientRect().height;
-  //         if (height().value !== currentElementHeight) {
-  //           // console.log("00 name", name);
-  //           // console.log("00 height()", height().value);
-  //           // console.log("00 currentMaxHeight", currentElementHeight);
-  //           setHeight((height) => ({ ...height, value: currentElementHeight }));
-  //           setParentHeight((parentHeight) => ({
-  //             ...parentHeight,
-  //             value: parentHeight.value + currentElementHeight,
-  //             overwrite: true,
-  //           }));
-  //         }
-  //       }
-  //     } else {
-  //       if (height().value !== 0) {
-  //         // console.log("01 name", name);
-  //         // console.log("01 height()", height().value);
-  //         setParentHeight((parentHeight) => ({
-  //           ...parentHeight,
-  //           value: parentHeight.value - height().value,
-  //           overwrite: true,
-  //         }));
-  //         setHeight((height) => ({ ...height, value: 0, overwrite: false }));
-  //       }
-  //     }
-  //   }
-  // });
-
-  // // Set the height of node when the signal isExpanded() changes
-  // createEffect(() => {
-  //   if (!isRoot) {
-  //     function getTreeRef(id) {
-  //       const parentLi = document.getElementById(id);
-  //       if (parentLi === null) {
-  //         return null;
-  //       }
-  //       const childUl = findChildElementWithPredicat(
-  //         parentLi,
-  //         (element) => element.tagName === "UL"
-  //       );
-  //       if (childUl === null) {
-  //         return null;
-  //       }
-
-  //       return childUl.parentElement;
-  //     }
-
-  //     function setNodeHeight(id, toExpand) {
-  //       const treeRef = getTreeRef(id);
-  //       if (treeRef === null) {
-  //         return;
-  //       }
-  //       const currentElementHeight = treeRef.getBoundingClientRect().height;
-
-  //       setNodeInStoreById(id, (obj) => ({
-  //         ...obj,
-  //         height: toExpand ? currentElementHeight : 0,
-  //       }));
-
-  //       return currentElementHeight;
-  //     }
-
-  //     function updateNodeHeight(id, incrementHeight) {
-  //       const treeRef = getTreeRef(id);
-  //       if (treeRef === null) {
-  //         return;
-  //       }
-  //       // console.log("1 treeRef", treeRef);
-
-  //       setNodeInStoreById(id, (obj) => ({
-  //         ...obj,
-  //         height: obj.height + incrementHeight,
-  //       }));
-  //     }
-  //     const isExpandedRaw = unwrap(isExpanded());
-
-  //     const nodePath = getNodePathById(store.nodes.rootNode, id);
-
-  //     nodePath.shift();
-  //     const startNode = nodePath.pop();
-  //     // const startNodeHeight = setNodeHeight(startNode.id, !isExpandedRaw);
-  //     const startNodeHeight = setNodeHeight(startNode.id, isExpandedRaw);
-
-  //     while (nodePath.length) {
-  //       const currentNode = nodePath.pop();
-  //       updateNodeHeight(
-  //         currentNode.id,
-  //         // isExpandedRaw ? -startNodeHeight : startNodeHeight
-  //         isExpandedRaw ? startNodeHeight : -startNodeHeight
-  //       );
-  //     }
-  //   }
-  // });
-
   // Applies the height in the style of the tree container
   //  -> trigger the animation for the height of the container
   createEffect(() => {
     if (!isRoot) {
-      // console.log("1  height()", height().value);
-      // treeContainerRef.style["height"] = `${height().value}px`;
       treeContainerRef.style["height"] = `${height()}px`;
     }
   });
@@ -442,7 +326,6 @@ const Tree = ({ id }) => {
   createEffect(() => {
     if (!isRoot) {
       if (isExpanded()) {
-        // if (isExpanded) {
         treeRef.classList.add("tree--open");
       } else {
         treeRef.classList.remove("tree--open");
@@ -471,13 +354,7 @@ const Tree = ({ id }) => {
           <For each={nodes()}>
             {(node, nodeIndex) => {
               const mustAutofocus = isRoot && nodeIndex() === 0;
-              return (
-                <Node
-                  node={node}
-                  // setHeight={setHeight}
-                  mustAutofocus={mustAutofocus}
-                />
-              );
+              return <Node node={node} mustAutofocus={mustAutofocus} />;
             }}
           </For>
         </ul>
