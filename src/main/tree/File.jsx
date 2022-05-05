@@ -1,6 +1,6 @@
 const File = ({ node, mustAutofocus }) => {
   return (
-    <li id={node.id} class="py-1">
+    <li id={node.id} class="pt-1">
       <span
         class="selectable file"
         tabindex="0"
