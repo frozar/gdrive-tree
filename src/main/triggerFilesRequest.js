@@ -256,7 +256,7 @@ export async function triggerFilesRequest(initSwitch) {
 
   let newNodes = await grabFiles(initSwitch);
 
-  const richerNodes = getRicherNodes(newNodes);
+  const richerNodes = getRicherNodes(newNodes, store.nodes.rootNode);
   if (!_.isEqual(store.nodes.rootNode.subNodes, richerNodes)) {
     setStore("nodes", (current) => ({
       ...current,

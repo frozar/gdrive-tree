@@ -3,8 +3,8 @@ import _ from "lodash";
 
 import { setStore } from "../../index";
 
-function getNodePathKeyByPredicat(root, predicat) {
-  const nodesToVisit = [{ ...root }];
+function getNodePathKeyByPredicat(root, predicat, unwraped) {
+  const nodesToVisit = unwraped ? [unwrap(root)] : [root];
 
   const key = [];
   const nodePath = [];
@@ -42,8 +42,8 @@ function getNodePathKeyByPredicat(root, predicat) {
   return null;
 }
 
-function getNodePathKeyById(root, id) {
-  const res = getNodePathKeyByPredicat(root, (n) => n.id === id);
+function getNodePathKeyById(root, id, unwraped) {
+  const res = getNodePathKeyByPredicat(root, (n) => n.id === id, unwraped);
 
   if (res) {
     return res;
@@ -200,42 +200,26 @@ function getNodePathKeyById(root, id) {
 //   );
 // }
 
-function itereOverNodes(rootNode, key) {
-  let targetNode = { ...rootNode };
-  for (const k of key) {
-    targetNode = targetNode.subNodes[k];
-  }
-  return targetNode;
-}
-
-export function getNodePathById(rootNode, id) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id);
-  return nodePath;
-}
-
-export function getNodeById(rootNode, id) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id);
+// TODO: big task
+// Use a HashSet 'id' -> node to avoid to use a graph to store node
+export function getNodeById(rootNode, id, unwraped = false) {
+  const [nodePath, _] = getNodePathKeyById(rootNode, id, unwraped);
   return nodePath.pop();
 }
 
-export function getParentNodeById(rootNode, id) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id);
-  nodePath.pop();
-
-  if (nodePath.length === 0) {
-    return null;
-  } else {
-    return nodePath.pop();
+export function getNodePathByNode(node) {
+  const nodePath = [node];
+  let currentNode = node.parentNode;
+  while (currentNode) {
+    nodePath.push(currentNode);
+    currentNode = currentNode.parentNode;
   }
+  return nodePath.reverse();
 }
 
 function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
   let targetNode = getNodeById(rootNode, id);
   if (targetNode) {
-    // console.log(
-    //   "typeof objUpdatesOrFunctionUpdates",
-    //   typeof objUpdatesOrFunctionUpdates
-    // );
     if (typeof objUpdatesOrFunctionUpdates === "object") {
       const objUpdates = objUpdatesOrFunctionUpdates;
       for (const [k, v] of Object.entries(objUpdates)) {
@@ -265,12 +249,20 @@ export function isFolder(node) {
   return node.mimeType === "application/vnd.google-apps.folder";
 }
 
-export function getRicherNodes(nodes) {
-  return [...nodes].map((n) => {
-    if (isFolder(n)) {
-      return { ...n, subNodes: null, isExpanded: false, height: 0 };
-    } else {
-      return { ...n };
-    }
-  });
+function getRicherNode(node, parentNode) {
+  if (isFolder(node)) {
+    return {
+      ...node,
+      parentNode,
+      subNodes: null,
+      isExpanded: false,
+      height: 0,
+    };
+  } else {
+    return { ...node, parentNode };
+  }
+}
+
+export function getRicherNodes(nodes, parentNode) {
+  return [...nodes].map((n) => getRicherNode(n, parentNode));
 }

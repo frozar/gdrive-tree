@@ -2,7 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #app {
+html,
+body,
+#app {
   height: 100%;
 }
 
@@ -79,7 +81,7 @@ body {
   cursor: pointer;
   user-select: none;
   border-radius: 0.4rem;
-  transition: font-size 0.150s ease-in, background-color 0.150s ease-in;
+  transition: font-size 0.15s ease-in, background-color 0.15s ease-in;
 }
 
 .selectable:focus {
@@ -136,4 +138,19 @@ min-height: calc(100% - 2rem); */
   justify-content: center;
   align-items: center;
   height: calc(100% - 2rem);
+}
+
+li {
+  background: unset;
+  transition: background 0.15s ease;
+}
+
+li:hover {
+  background: #8080801a;
+}
+
+.nameContent {
+  margin-left: 4px;
+  margin-right: 2px;
+  white-space: nowrap;
 }

@@ -60,7 +60,7 @@ const TreeContainer = ({ initSwitch }) => {
       }
       fallback={<ShowFilesButton initSwitch={initSwitch} />}
     >
-      <Tree id="root" />
+      <Tree node={store.nodes.rootNode} />
     </Show>
   );
 };
