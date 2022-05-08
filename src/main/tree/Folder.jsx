@@ -68,15 +68,15 @@ const ArrowIcon = ({ node, toggleExpanded }) => {
   );
 };
 
-async function fetchSubNodes(id, fetchState, setFetchState) {
+async function fetchSubNodes(node, fetchState, setFetchState) {
   if (fetchState() !== "done") {
     try {
       setFetchState("running");
       // TODO : enbedded deeper the call to the getRicherNodes() function
-      const nodes = await getSortedNodesFromDirectory(999, "*", id);
-      const richerNodes = getRicherNodes(nodes);
+      const nodes = await getSortedNodesFromDirectory(999, "*", node.id);
+      const richerNodes = getRicherNodes(nodes, node);
 
-      setNodeInStoreById(id, { subNodes: richerNodes });
+      setNodeInStoreById(node.id, { subNodes: richerNodes });
 
       setFetchState("done");
     } catch (error) {
@@ -212,7 +212,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   // Fetch only if the parent tree has been expanded once.
   createEffect(() => {
     if (isParentExpanded()) {
-      fetchSubNodes(node.id, fetchState, setFetchState);
+      fetchSubNodes(node, fetchState, setFetchState);
     }
   });
 

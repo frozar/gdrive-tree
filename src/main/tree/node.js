@@ -265,12 +265,20 @@ export function isFolder(node) {
   return node.mimeType === "application/vnd.google-apps.folder";
 }
 
-export function getRicherNodes(nodes) {
-  return [...nodes].map((n) => {
-    if (isFolder(n)) {
-      return { ...n, subNodes: null, isExpanded: false, height: 0 };
-    } else {
-      return { ...n };
-    }
-  });
+function getRicherNode(node, parentNode) {
+  if (isFolder(node)) {
+    return {
+      ...node,
+      parentNode,
+      subNodes: null,
+      isExpanded: false,
+      height: 0,
+    };
+  } else {
+    return { ...node, parentNode };
+  }
+}
+
+export function getRicherNodes(nodes, parentNode) {
+  return [...nodes].map((n) => getRicherNode(n, parentNode));
 }

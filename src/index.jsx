@@ -13,6 +13,7 @@ const defaultStore = {
     rootNode: {
       id: "root",
       name: "ROOT",
+      parentNode: null,
       isExpanded: true,
       subNodes: null,
       height: 0,
