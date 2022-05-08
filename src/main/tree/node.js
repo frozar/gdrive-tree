@@ -3,8 +3,8 @@ import _ from "lodash";
 
 import { setStore } from "../../index";
 
-function getNodePathKeyByPredicat(root, predicat) {
-  const nodesToVisit = [{ ...root }];
+function getNodePathKeyByPredicat(root, predicat, unwraped) {
+  const nodesToVisit = unwraped ? [unwrap(root)] : [root];
 
   const key = [];
   const nodePath = [];
@@ -42,8 +42,8 @@ function getNodePathKeyByPredicat(root, predicat) {
   return null;
 }
 
-function getNodePathKeyById(root, id) {
-  const res = getNodePathKeyByPredicat(root, (n) => n.id === id);
+function getNodePathKeyById(root, id, unwraped) {
+  const res = getNodePathKeyByPredicat(root, (n) => n.id === id, unwraped);
 
   if (res) {
     return res;
@@ -208,18 +208,18 @@ function itereOverNodes(rootNode, key) {
   return targetNode;
 }
 
-export function getNodePathById(rootNode, id) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id);
+export function getNodePathById(rootNode, id, unwraped = false) {
+  const [nodePath, _] = getNodePathKeyById(rootNode, id, unwraped);
   return nodePath;
 }
 
-export function getNodeById(rootNode, id) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id);
+export function getNodeById(rootNode, id, unwraped = false) {
+  const [nodePath, _] = getNodePathKeyById(rootNode, id, unwraped);
   return nodePath.pop();
 }
 
-export function getParentNodeById(rootNode, id) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id);
+export function getParentNodeById(rootNode, id, unwraped = false) {
+  const [nodePath, _] = getNodePathKeyById(rootNode, id, unwraped);
   nodePath.pop();
 
   if (nodePath.length === 0) {

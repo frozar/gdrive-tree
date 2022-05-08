@@ -13,6 +13,8 @@ import {
 import {
   findParentElementWithPredicat,
   findChildElementWithPredicat,
+  findNearestLowerFocusableElement,
+  findNearestUpperLiWithId,
 } from "./htmlElement";
 import { store } from "../../index";
 
@@ -49,36 +51,20 @@ const Tree = ({ id }) => {
   let treeContainerRef;
   let treeRef;
 
-  function findNearestLowerFoccusableElement(element) {
-    const parentElementWithTabIndex = findChildElementWithPredicat(
-      element,
-      (element) => element.getAttribute("tabindex") !== null
-    );
-
-    if (parentElementWithTabIndex) {
-      return parentElementWithTabIndex;
-    } else {
-      return new Error(`Cannot find parent id for element ${element}`);
+  function isElementVisible(element) {
+    const nearestId = findNearestUpperLiWithId(element);
+    if (nearestId === null) {
+      return false;
     }
+    const nodePath = getNodePathById(store.nodes.rootNode, nearestId, true);
+
+    // Check if every parent elements are expanded, so visible
+    return nodePath
+      .slice(0, nodePath.length - 1)
+      .every((n) => n.isExpanded === true);
   }
 
-  function findNearestUpperId(element) {
-    const parentElementWithId = findParentElementWithPredicat(
-      element,
-      (element) =>
-        element.tagName === "LI" && element.getAttribute("id") !== null
-    );
-
-    if (parentElementWithId) {
-      return parentElementWithId.getAttribute("id");
-    } else {
-      console.info("Cannot find parent id for element");
-      console.info(element);
-      return null;
-    }
-  }
-
-  function findFoccusableElement(
+  function findFocusableElement(
     resTabbable,
     indexTabbableElement,
     increment,
@@ -91,21 +77,22 @@ const Tree = ({ id }) => {
           Math.min(indexTabbableElement + increment, resTabbable.length - 1)
         );
     const nextTabbableElement = resTabbable[indexNextTabbableElement];
-    const nereastId = findNearestUpperId(nextTabbableElement);
-    if (nereastId === null) {
-      return null;
-    }
-    const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
+    // const nereastId = findNearestUpperLiWithId(nextTabbableElement);
+    // if (nereastId === null) {
+    //   return null;
+    // }
+    // const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
 
     // Check if every parent elements are expanded, so visible
     if (
-      !nodePath
-        .slice(0, nodePath.length - 1)
-        .some((n) => n.isExpanded === false)
+      // !nodePath
+      //   .slice(0, nodePath.length - 1)
+      //   .some((n) => n.isExpanded === false)
+      isElementVisible(nextTabbableElement)
     ) {
       return nextTabbableElement;
     } else {
-      return findFoccusableElement(
+      return findFocusableElement(
         resTabbable,
         indexNextTabbableElement,
         increment,
@@ -118,42 +105,42 @@ const Tree = ({ id }) => {
     return tabbable(treeContainerRef);
   }
 
-  function findNextFoccusableElement(cycle) {
+  function findNextFocusableElement(cycle) {
     const resTabbable = getTabbableElement();
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
     }
-    return findFoccusableElement(resTabbable, indexTabbableElement, +1, cycle);
+    return findFocusableElement(resTabbable, indexTabbableElement, +1, cycle);
   }
 
-  function findPreviousFoccusableElement(cycle) {
+  function findPreviousFocusableElement(cycle) {
     const resTabbable = getTabbableElement();
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
     }
-    return findFoccusableElement(resTabbable, indexTabbableElement, -1, cycle);
+    return findFocusableElement(resTabbable, indexTabbableElement, -1, cycle);
   }
 
   function handleKeyDown(event) {
-    function focusElementIfFound(nextFoccusableElement) {
-      if (nextFoccusableElement === null) {
+    function focusElementIfFound(nextFocusableElement) {
+      if (nextFocusableElement === null) {
         return;
       }
 
-      nextFoccusableElement.focus();
+      nextFocusableElement.focus();
     }
 
     if (event.code === "Tab") {
       event.preventDefault();
 
-      const nextFoccusableElement =
+      const nextFocusableElement =
         event.shiftKey === false
-          ? findNextFoccusableElement(true)
-          : findPreviousFoccusableElement(true);
+          ? findNextFocusableElement(true)
+          : findPreviousFocusableElement(true);
 
-      focusElementIfFound(nextFoccusableElement);
+      focusElementIfFound(nextFocusableElement);
     }
 
     function handleArrowUp(opt) {
@@ -161,8 +148,8 @@ const Tree = ({ id }) => {
       if (opt && typeof opt.cycle === "boolean") {
         cycle = opt.cycle;
       }
-      const nextFoccusableElement = findPreviousFoccusableElement(cycle);
-      focusElementIfFound(nextFoccusableElement);
+      const nextFocusableElement = findPreviousFocusableElement(cycle);
+      focusElementIfFound(nextFocusableElement);
     }
 
     function handleArrowDown(opt) {
@@ -171,8 +158,8 @@ const Tree = ({ id }) => {
         cycle = opt.cycle;
       }
       // console.log("cycle", cycle);
-      const nextFoccusableElement = findNextFoccusableElement(cycle);
-      focusElementIfFound(nextFoccusableElement);
+      const nextFocusableElement = findNextFocusableElement(cycle);
+      focusElementIfFound(nextFocusableElement);
     }
 
     if (event.code === "ArrowUp") {
@@ -190,7 +177,7 @@ const Tree = ({ id }) => {
     if (event.code === "ArrowRight") {
       event.preventDefault();
 
-      const id = findNearestUpperId(document.activeElement);
+      const id = findNearestUpperLiWithId(document.activeElement);
       if (id === null) {
         return;
       }
@@ -208,7 +195,7 @@ const Tree = ({ id }) => {
     if (event.code === "ArrowLeft") {
       event.preventDefault();
 
-      const id = findNearestUpperId(document.activeElement);
+      const id = findNearestUpperLiWithId(document.activeElement);
       if (id === null) {
         return;
       }
@@ -222,7 +209,7 @@ const Tree = ({ id }) => {
       } else {
         // Focus the parent folder
         const element = document.getElementById(id);
-        const parentId = findNearestUpperId(element.parentElement);
+        const parentId = findNearestUpperLiWithId(element.parentElement);
 
         // If no parent is was found, escape
         if (parentId === null) {
@@ -230,16 +217,15 @@ const Tree = ({ id }) => {
         }
 
         const parentElement = document.getElementById(parentId);
-        const childFoccusable =
-          findNearestLowerFoccusableElement(parentElement);
-        childFoccusable.focus();
+        const childFocusable = findNearestLowerFocusableElement(parentElement);
+        childFocusable.focus();
       }
     }
 
     if (event.code === "Enter") {
       event.preventDefault();
 
-      const id = findNearestUpperId(document.activeElement);
+      const id = findNearestUpperLiWithId(document.activeElement);
       if (id === null) {
         return;
       }
@@ -258,7 +244,7 @@ const Tree = ({ id }) => {
     if (event.code === "Space") {
       event.preventDefault();
 
-      const id = findNearestUpperId(document.activeElement);
+      const id = findNearestUpperLiWithId(document.activeElement);
       if (id === null) {
         return;
       }
@@ -331,6 +317,83 @@ const Tree = ({ id }) => {
         treeRef.classList.remove("tree--open");
       }
     }
+  });
+
+  createEffect(() => {
+    const cond =
+      treeContainerRef &&
+      treeContainerRef.parentElement &&
+      treeContainerRef.parentElement.id === "1gDNJO-ItDm2In206Tc9o9S1EqdSn0_S4";
+    if (!isElementVisible(treeContainerRef)) {
+      return;
+    }
+    // if (cond) {
+    //   console.log(treeContainerRef);
+    // }
+    // Every node that the width has to be checked
+    let listElement = Array.from(document.querySelectorAll("span.selectable"));
+    listElement = listElement.filter((elt) => isElementVisible(elt));
+    // if (cond) {
+    //   console.log(listElement);
+    // }
+
+    isExpanded();
+    // if (!isExpanded()) {
+    //   listElement = listElement.filter((n) => !treeContainerRef.contains(n));
+    // }
+    let longestElement;
+    let tmpMax = 0;
+    const maxWidth = listElement
+      .map((elt) => {
+        const rect = elt.getBoundingClientRect();
+        if (tmpMax < rect.x + rect.width) {
+          tmpMax = rect.x + rect.width;
+          longestElement = elt;
+        }
+        return rect.x + rect.width;
+      })
+      .reduce((acc, currentVal) => {
+        return Math.max(acc, currentVal);
+      }, 0);
+    // if (cond) {
+    //   console.log("maxWidth", maxWidth);
+    // }
+
+    const body = document.body;
+    // if (cond) {
+    //   console.log(`body.style.width [${body.style.width}]`);
+    //   console.log(
+    //     `window.innerWidth < maxWidth [${window.innerWidth < maxWidth}]`
+    //   );
+    // }
+    if (window.innerWidth < maxWidth) {
+      const bodyWidth = body.style.width;
+      const bodyWidthWithoutUnit = bodyWidth.replace("px", "");
+      const widthOffset = 10;
+      // if (cond) {
+      //   console.log(
+      //     `Math.max(+bodyWidthWithoutUnit, maxWidth) [${Math.max(
+      //       +bodyWidthWithoutUnit,
+      //       maxWidth
+      //     )}]`
+      //   );
+      // }
+      // const bodyWidthEnding = bodyWidth.slice(bodyWidth.length - 2, bodyWidth.length);
+      // if(bodyWidthEnding === "px") {
+      // }
+      if (+bodyWidthWithoutUnit < maxWidth + widthOffset) {
+        console.log(longestElement);
+      }
+      body.style.width = `${Math.max(
+        +bodyWidthWithoutUnit,
+        maxWidth + widthOffset
+      )}px`;
+    } else {
+      body.style.width = "";
+    }
+    // if (cond) {
+    //   console.log(`body.style.width [${body.style.width}]`);
+    // }
   });
 
   return (

@@ -28,3 +28,31 @@ export function findChildElementWithPredicat(element, predicat) {
 
   return null;
 }
+
+export function findNearestLowerFocusableElement(element) {
+  const childElementWithTabIndex = findChildElementWithPredicat(
+    element,
+    (element) => element.getAttribute("tabindex") !== null
+  );
+
+  if (childElementWithTabIndex) {
+    return childElementWithTabIndex;
+  } else {
+    return new Error(`Cannot find parent id for element ${element}`);
+  }
+}
+
+export function findNearestUpperLiWithId(element) {
+  const parentElementWithId = findParentElementWithPredicat(
+    element,
+    (element) => element.tagName === "LI" && element.getAttribute("id") !== null
+  );
+
+  if (parentElementWithId) {
+    return parentElementWithId.getAttribute("id");
+  } else {
+    console.info("Cannot find parent id for element");
+    console.info(element);
+    return null;
+  }
+}
