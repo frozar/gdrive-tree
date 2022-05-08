@@ -11,14 +11,16 @@ import {
   getNodePathById,
 } from "./node";
 import {
-  findParentElementWithPredicat,
-  findChildElementWithPredicat,
   findNearestLowerFocusableElement,
   findNearestUpperLiWithId,
+  getParentElements,
 } from "./htmlElement";
 import { store } from "../../index";
 
 const Tree = ({ id }) => {
+  let treeContainerRef;
+  let treeRef;
+
   const isRoot = id === "root";
 
   const nodes = () => {
@@ -48,20 +50,16 @@ const Tree = ({ id }) => {
     }
   };
 
-  let treeContainerRef;
-  let treeRef;
-
+  /**
+   * Check if every parent elements are expanded, so visible
+   * @param {*} element
+   * @returns
+   */
   function isElementVisible(element) {
-    const nearestId = findNearestUpperLiWithId(element);
-    if (nearestId === null) {
-      return false;
-    }
-    const nodePath = getNodePathById(store.nodes.rootNode, nearestId, true);
+    const listParent = getParentElements(element);
+    const isNotVisible = listParent.some((elt) => elt.style.height === "0px");
 
-    // Check if every parent elements are expanded, so visible
-    return nodePath
-      .slice(0, nodePath.length - 1)
-      .every((n) => n.isExpanded === true);
+    return !isNotVisible;
   }
 
   function findFocusableElement(
@@ -77,19 +75,9 @@ const Tree = ({ id }) => {
           Math.min(indexTabbableElement + increment, resTabbable.length - 1)
         );
     const nextTabbableElement = resTabbable[indexNextTabbableElement];
-    // const nereastId = findNearestUpperLiWithId(nextTabbableElement);
-    // if (nereastId === null) {
-    //   return null;
-    // }
-    // const nodePath = getNodePathById(store.nodes.rootNode, nereastId);
 
     // Check if every parent elements are expanded, so visible
-    if (
-      // !nodePath
-      //   .slice(0, nodePath.length - 1)
-      //   .some((n) => n.isExpanded === false)
-      isElementVisible(nextTabbableElement)
-    ) {
+    if (isElementVisible(nextTabbableElement)) {
       return nextTabbableElement;
     } else {
       return findFocusableElement(
@@ -157,7 +145,6 @@ const Tree = ({ id }) => {
       if (opt && typeof opt.cycle === "boolean") {
         cycle = opt.cycle;
       }
-      // console.log("cycle", cycle);
       const nextFocusableElement = findNextFocusableElement(cycle);
       focusElementIfFound(nextFocusableElement);
     }
@@ -181,7 +168,7 @@ const Tree = ({ id }) => {
       if (id === null) {
         return;
       }
-      const node = getNodeById(store.nodes.rootNode, id);
+      const node = getNodeById(store.nodes.rootNode, id, true);
 
       if (isFolder(node) && !node.isExpanded) {
         setNodeInStoreById(id, {
@@ -199,7 +186,7 @@ const Tree = ({ id }) => {
       if (id === null) {
         return;
       }
-      const node = getNodeById(store.nodes.rootNode, id);
+      const node = getNodeById(store.nodes.rootNode, id, true);
 
       if (isFolder(node) && node.isExpanded) {
         // Retract the folder
@@ -229,7 +216,7 @@ const Tree = ({ id }) => {
       if (id === null) {
         return;
       }
-      const node = getNodeById(store.nodes.rootNode, id);
+      const node = getNodeById(store.nodes.rootNode, id, true);
       if (isFolder(node)) {
         if (!node.isExpanded) {
           setNodeInStoreById(id, {
@@ -249,7 +236,7 @@ const Tree = ({ id }) => {
         return;
       }
 
-      const node = getNodeById(store.nodes.rootNode, id);
+      const node = getNodeById(store.nodes.rootNode, id, true);
       if (isFolder(node)) {
         setNodeInStoreById(id, {
           isExpanded: !node.isExpanded,
@@ -320,27 +307,17 @@ const Tree = ({ id }) => {
   });
 
   createEffect(() => {
-    const cond =
-      treeContainerRef &&
-      treeContainerRef.parentElement &&
-      treeContainerRef.parentElement.id === "1gDNJO-ItDm2In206Tc9o9S1EqdSn0_S4";
+    isExpanded();
+
     if (!isElementVisible(treeContainerRef)) {
       return;
     }
-    // if (cond) {
-    //   console.log(treeContainerRef);
-    // }
-    // Every node that the width has to be checked
-    let listElement = Array.from(document.querySelectorAll("span.selectable"));
-    listElement = listElement.filter((elt) => isElementVisible(elt));
-    // if (cond) {
-    //   console.log(listElement);
-    // }
 
-    isExpanded();
-    // if (!isExpanded()) {
-    //   listElement = listElement.filter((n) => !treeContainerRef.contains(n));
-    // }
+    // Every node that the width has to be checked
+    let listElement = Array.from(
+      document.querySelectorAll("span.selectable")
+    ).filter((elt) => isElementVisible(elt));
+
     let longestElement;
     let tmpMax = 0;
     const maxWidth = listElement
@@ -355,45 +332,22 @@ const Tree = ({ id }) => {
       .reduce((acc, currentVal) => {
         return Math.max(acc, currentVal);
       }, 0);
-    // if (cond) {
-    //   console.log("maxWidth", maxWidth);
-    // }
 
     const body = document.body;
-    // if (cond) {
-    //   console.log(`body.style.width [${body.style.width}]`);
-    //   console.log(
-    //     `window.innerWidth < maxWidth [${window.innerWidth < maxWidth}]`
-    //   );
-    // }
+
     if (window.innerWidth < maxWidth) {
       const bodyWidth = body.style.width;
       const bodyWidthWithoutUnit = bodyWidth.replace("px", "");
       const widthOffset = 10;
-      // if (cond) {
-      //   console.log(
-      //     `Math.max(+bodyWidthWithoutUnit, maxWidth) [${Math.max(
-      //       +bodyWidthWithoutUnit,
-      //       maxWidth
-      //     )}]`
-      //   );
-      // }
-      // const bodyWidthEnding = bodyWidth.slice(bodyWidth.length - 2, bodyWidth.length);
-      // if(bodyWidthEnding === "px") {
-      // }
-      if (+bodyWidthWithoutUnit < maxWidth + widthOffset) {
-        console.log(longestElement);
-      }
-      body.style.width = `${Math.max(
+
+      const effectiveWidth = Math.max(
         +bodyWidthWithoutUnit,
         maxWidth + widthOffset
-      )}px`;
+      );
+      body.style.width = `${effectiveWidth}px`;
     } else {
       body.style.width = "";
     }
-    // if (cond) {
-    //   console.log(`body.style.width [${body.style.width}]`);
-    // }
   });
 
   return (

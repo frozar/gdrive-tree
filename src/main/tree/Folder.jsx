@@ -1,5 +1,4 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
-import { unwrap } from "solid-js/store";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
 import Tree from "./index";
@@ -22,7 +21,7 @@ import SpinningWheel from "../../SpinningWheel";
 import { store } from "../../index";
 
 // TODO: use solidjs-icon librairy
-const ArrowIcon = ({ id, toggleExpanded }) => {
+const ArrowIcon = ({ id, node, toggleExpanded }) => {
   const isExpanded = () => {
     const foundNode = getNodeById(store.nodes.rootNode, id);
     if (foundNode) {
@@ -30,6 +29,7 @@ const ArrowIcon = ({ id, toggleExpanded }) => {
     } else {
       return false;
     }
+    // return node.isExpand;
   };
 
   let arrowRef;
@@ -133,8 +133,8 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       return childUl.parentElement;
     }
 
-    function setNodeHeight(id, toExpand) {
-      const treeRef = getTreeRef(id);
+    function setNodeHeight(node, toExpand) {
+      const treeRef = getTreeRef(node.id);
       if (treeRef === null) {
         return null;
       }
@@ -145,12 +145,18 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       const heightToSet = currentElementHeight + heightOffset;
 
       let hasUpdated = false;
-      const node = getNodeById(store.nodes.rootNode, id);
+      // const node = getNodeById(store.nodes.rootNode, id);
       if (node.height === 0 && toExpand) {
-        setNodeInStoreById(id, { height: heightToSet });
+        setNodeInStoreById(node.id, { height: heightToSet });
+        // const mutableNode = createMutable(node);
+        // mutableNode.height = heightToSet;
+        // setProperty(node, "height", heightToSet);
         hasUpdated = true;
       } else if (node.height !== 0 && !toExpand) {
-        setNodeInStoreById(id, { height: 0 });
+        setNodeInStoreById(node.id, { height: 0 });
+        // const mutableNode = createMutable(node);
+        // mutableNode.height = 0;
+        // setProperty(node, "height", 0);
         hasUpdated = true;
       }
 
@@ -168,18 +174,24 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       }));
     }
 
-    const nodePath = getNodePathById(store.nodes.rootNode, node.id);
-    if (!isFolder(nodePath[nodePath.length - 1])) {
-      return;
-    }
+    // const nodePath = getNodePathById(store.nodes.rootNode, node.id);
+    // // if (!isFolder(nodePath[nodePath.length - 1])) {
+    // //   return;
+    // // }
 
-    nodePath.shift();
-    const startNode = nodePath.pop();
-    const res = setNodeHeight(startNode.id, node.isExpanded);
+    // nodePath.shift();
+    // const startNode = nodePath.pop();
+    // const res = setNodeHeight(startNode.id, node.isExpanded);
+    const res = setNodeHeight(node, node.isExpanded);
 
     if (res === null) {
       return;
     }
+
+    const nodePath = getNodePathById(store.nodes.rootNode, node.id);
+    // Delete the current node and the root node from nodePath
+    nodePath.pop();
+    nodePath.shift();
 
     const [hasUpdated, startNodeHeight] = res;
     if (hasUpdated) {
@@ -282,7 +294,11 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       }}
     >
       <span class="folder-surrounding-span">
-        <ArrowIcon id={node.id} toggleExpanded={toggleExpanded} />
+        <ArrowIcon
+          id={node.id}
+          // node={node}
+          toggleExpanded={toggleExpanded}
+        />
         <span
           class="selectable"
           tabindex="0"

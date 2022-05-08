@@ -56,3 +56,13 @@ export function findNearestUpperLiWithId(element) {
     return null;
   }
 }
+
+export function getParentElements(element) {
+  let currentElt = element.parentElement;
+  const listParent = [];
+  while (currentElt) {
+    listParent.push(currentElt);
+    currentElt = currentElt.parentElement;
+  }
+  return listParent;
+}
