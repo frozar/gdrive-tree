@@ -21,15 +21,9 @@ import SpinningWheel from "../../SpinningWheel";
 import { store } from "../../index";
 
 // TODO: use solidjs-icon librairy
-const ArrowIcon = ({ id, node, toggleExpanded }) => {
+const ArrowIcon = ({ node, toggleExpanded }) => {
   const isExpanded = () => {
-    const foundNode = getNodeById(store.nodes.rootNode, id);
-    if (foundNode) {
-      return foundNode.isExpanded;
-    } else {
-      return false;
-    }
-    // return node.isExpand;
+    return node.isExpanded;
   };
 
   let arrowRef;
@@ -100,9 +94,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   };
 
   function toggleExpanded() {
-    setNodeInStoreById(node.id, (obj) => ({
-      isExpanded: !obj.isExpanded,
-    }));
+    setNodeInStoreById(node.id, { isExpanded: !node.isExpanded });
   }
 
   createEffect(() => {
@@ -205,6 +197,9 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
     }
   });
 
+  // TODO : big task:
+  // be able to access to a parent node from a child
+  // => cheaper to check if the parentNode is expanded or not
   const isParentExpanded = () => {
     const parentNode = getParentNodeById(store.nodes.rootNode, node.id);
     if (parentNode) {
@@ -294,11 +289,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       }}
     >
       <span class="folder-surrounding-span">
-        <ArrowIcon
-          id={node.id}
-          // node={node}
-          toggleExpanded={toggleExpanded}
-        />
+        <ArrowIcon node={node} toggleExpanded={toggleExpanded} />
         <span
           class="selectable"
           tabindex="0"
@@ -341,7 +332,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
         {fetchState() === "running" && <SmallSpinningWheel />}
       </span>
       {fetchState() === "done" && (
-        <Tree id={node.id} setParentHeight={setParentHeight} />
+        <Tree node={node} setParentHeight={setParentHeight} />
       )}
     </li>
   );

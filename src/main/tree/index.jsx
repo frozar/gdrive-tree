@@ -17,37 +17,22 @@ import {
 } from "./htmlElement";
 import { store } from "../../index";
 
-const Tree = ({ id }) => {
+const Tree = ({ node }) => {
   let treeContainerRef;
   let treeRef;
 
-  const isRoot = id === "root";
+  const isRoot = node.id === "root";
 
   const nodes = () => {
-    const node = getNodeById(store.nodes.rootNode, id);
-    if (node && node.subNodes) {
-      return node.subNodes;
-    } else {
-      return [];
-    }
+    return node.subNodes;
   };
 
   const isExpanded = () => {
-    const foundNode = getNodeById(store.nodes.rootNode, id);
-    if (foundNode) {
-      return foundNode.isExpanded;
-    } else {
-      return false;
-    }
+    return node.isExpanded;
   };
 
   const height = () => {
-    const foundNode = getNodeById(store.nodes.rootNode, id);
-    if (foundNode) {
-      return foundNode.height;
-    } else {
-      return 0;
-    }
+    return node.height;
   };
 
   /**
