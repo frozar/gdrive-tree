@@ -229,13 +229,19 @@ export function getParentNodeById(rootNode, id, unwraped = false) {
   }
 }
 
+export function getNodePathByNode(node) {
+  const nodePath = [node];
+  let currentNode = node.parentNode;
+  while (currentNode) {
+    nodePath.push(currentNode);
+    currentNode = currentNode.parentNode;
+  }
+  return nodePath.reverse();
+}
+
 function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
   let targetNode = getNodeById(rootNode, id);
   if (targetNode) {
-    // console.log(
-    //   "typeof objUpdatesOrFunctionUpdates",
-    //   typeof objUpdatesOrFunctionUpdates
-    // );
     if (typeof objUpdatesOrFunctionUpdates === "object") {
       const objUpdates = objUpdatesOrFunctionUpdates;
       for (const [k, v] of Object.entries(objUpdates)) {

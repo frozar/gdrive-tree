@@ -9,6 +9,7 @@ import {
   getRicherNodes,
   getNodePathById,
   isFolder,
+  getNodePathByNode,
 } from "./node";
 import {
   findChildElementWithPredicat,
@@ -137,7 +138,6 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       const heightToSet = currentElementHeight + heightOffset;
 
       let hasUpdated = false;
-      // const node = getNodeById(store.nodes.rootNode, id);
       if (node.height === 0 && toExpand) {
         setNodeInStoreById(node.id, { height: heightToSet });
         // const mutableNode = createMutable(node);
@@ -166,21 +166,13 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       }));
     }
 
-    // const nodePath = getNodePathById(store.nodes.rootNode, node.id);
-    // // if (!isFolder(nodePath[nodePath.length - 1])) {
-    // //   return;
-    // // }
-
-    // nodePath.shift();
-    // const startNode = nodePath.pop();
-    // const res = setNodeHeight(startNode.id, node.isExpanded);
     const res = setNodeHeight(node, node.isExpanded);
 
     if (res === null) {
       return;
     }
 
-    const nodePath = getNodePathById(store.nodes.rootNode, node.id);
+    const nodePath = getNodePathByNode(node);
     // Delete the current node and the root node from nodePath
     nodePath.pop();
     nodePath.shift();
@@ -197,16 +189,8 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
     }
   });
 
-  // TODO : big task:
-  // be able to access to a parent node from a child
-  // => cheaper to check if the parentNode is expanded or not
   const isParentExpanded = () => {
-    const parentNode = getParentNodeById(store.nodes.rootNode, node.id);
-    if (parentNode) {
-      return parentNode.isExpanded;
-    } else {
-      return false;
-    }
+    return node.parentNode.isExpanded;
   };
 
   // Fetch only if the parent tree has been expanded once.

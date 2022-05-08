@@ -146,20 +146,27 @@ const Tree = ({ node }) => {
       handleArrowDown();
     }
 
+    function getActiveNode() {
+      const id = findNearestUpperLiWithId(document.activeElement);
+      if (id === null) {
+        return null;
+      }
+      return getNodeById(store.nodes.rootNode, id, true);
+    }
+
     if (event.code === "ArrowRight") {
       event.preventDefault();
 
-      const id = findNearestUpperLiWithId(document.activeElement);
-      if (id === null) {
+      const activeNode = getActiveNode();
+      if (activeNode === null) {
         return;
       }
-      const node = getNodeById(store.nodes.rootNode, id, true);
 
-      if (isFolder(node) && !node.isExpanded) {
-        setNodeInStoreById(id, {
+      if (isFolder(activeNode) && !activeNode.isExpanded) {
+        setNodeInStoreById(activeNode.id, {
           isExpanded: true,
         });
-      } else if (isFolder(node)) {
+      } else if (isFolder(activeNode)) {
         handleArrowDown();
       }
     }
@@ -167,20 +174,19 @@ const Tree = ({ node }) => {
     if (event.code === "ArrowLeft") {
       event.preventDefault();
 
-      const id = findNearestUpperLiWithId(document.activeElement);
-      if (id === null) {
+      const activeNode = getActiveNode();
+      if (activeNode === null) {
         return;
       }
-      const node = getNodeById(store.nodes.rootNode, id, true);
 
-      if (isFolder(node) && node.isExpanded) {
+      if (isFolder(activeNode) && activeNode.isExpanded) {
         // Retract the folder
-        setNodeInStoreById(id, {
+        setNodeInStoreById(activeNode.id, {
           isExpanded: false,
         });
       } else {
         // Focus the parent folder
-        const element = document.getElementById(id);
+        const element = document.getElementById(activeNode.id);
         const parentId = findNearestUpperLiWithId(element.parentElement);
 
         // If no parent is was found, escape
@@ -197,34 +203,31 @@ const Tree = ({ node }) => {
     if (event.code === "Enter") {
       event.preventDefault();
 
-      const id = findNearestUpperLiWithId(document.activeElement);
-      if (id === null) {
+      const activeNode = getActiveNode();
+      if (activeNode === null) {
         return;
       }
-      const node = getNodeById(store.nodes.rootNode, id, true);
-      if (isFolder(node)) {
-        if (!node.isExpanded) {
-          setNodeInStoreById(id, {
+      if (isFolder(activeNode)) {
+        if (!activeNode.isExpanded) {
+          setNodeInStoreById(activeNode.id, {
             isExpanded: true,
           });
         }
       } else {
-        window.open(node.webViewLink, "_blank").focus();
+        window.open(activeNode.webViewLink, "_blank").focus();
       }
     }
 
     if (event.code === "Space") {
       event.preventDefault();
 
-      const id = findNearestUpperLiWithId(document.activeElement);
-      if (id === null) {
+      const activeNode = getActiveNode();
+      if (activeNode === null) {
         return;
       }
-
-      const node = getNodeById(store.nodes.rootNode, id, true);
-      if (isFolder(node)) {
+      if (isFolder(activeNode)) {
         setNodeInStoreById(id, {
-          isExpanded: !node.isExpanded,
+          isExpanded: !activeNode.isExpanded,
         });
       }
     }
