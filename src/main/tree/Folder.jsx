@@ -2,19 +2,10 @@ import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
 import Tree from "./index";
-import {
-  setNodeInStoreById,
-  getNodeById,
-  getParentNodeById,
-  getRicherNodes,
-  getNodePathById,
-  isFolder,
-  getNodePathByNode,
-} from "./node";
+import { setNodeInStoreById, getRicherNodes, getNodePathByNode } from "./node";
 import {
   findChildElementWithPredicat,
   findNearestLowerFocusableElement,
-  findParentElementWithPredicat,
   findNearestUpperLiWithId,
 } from "./htmlElement";
 
@@ -140,15 +131,9 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
       let hasUpdated = false;
       if (node.height === 0 && toExpand) {
         setNodeInStoreById(node.id, { height: heightToSet });
-        // const mutableNode = createMutable(node);
-        // mutableNode.height = heightToSet;
-        // setProperty(node, "height", heightToSet);
         hasUpdated = true;
       } else if (node.height !== 0 && !toExpand) {
         setNodeInStoreById(node.id, { height: 0 });
-        // const mutableNode = createMutable(node);
-        // mutableNode.height = 0;
-        // setProperty(node, "height", 0);
         hasUpdated = true;
       }
 
@@ -210,6 +195,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
     }
   }
 
+  // TODO: fix the body width in case a long name is focus and so scale up
   function handleFocus(e) {
     // console.log("Focus");
     // const rect = e.target.getBoundingClientRect();

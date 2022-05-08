@@ -4,12 +4,7 @@ import { unwrap } from "solid-js/store";
 import { tabbable } from "tabbable";
 
 import Node from "./Node";
-import {
-  setNodeInStoreById,
-  getNodeById,
-  isFolder,
-  getNodePathById,
-} from "./node";
+import { setNodeInStoreById, getNodeById, isFolder } from "./node";
 import {
   findNearestLowerFocusableElement,
   findNearestUpperLiWithId,

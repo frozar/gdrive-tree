@@ -200,33 +200,11 @@ function getNodePathKeyById(root, id, unwraped) {
 //   );
 // }
 
-function itereOverNodes(rootNode, key) {
-  let targetNode = { ...rootNode };
-  for (const k of key) {
-    targetNode = targetNode.subNodes[k];
-  }
-  return targetNode;
-}
-
-export function getNodePathById(rootNode, id, unwraped = false) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id, unwraped);
-  return nodePath;
-}
-
+// TODO: big task
+// Use a HashSet 'id' -> node to avoid to use a graph to store node
 export function getNodeById(rootNode, id, unwraped = false) {
   const [nodePath, _] = getNodePathKeyById(rootNode, id, unwraped);
   return nodePath.pop();
-}
-
-export function getParentNodeById(rootNode, id, unwraped = false) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id, unwraped);
-  nodePath.pop();
-
-  if (nodePath.length === 0) {
-    return null;
-  } else {
-    return nodePath.pop();
-  }
 }
 
 export function getNodePathByNode(node) {
