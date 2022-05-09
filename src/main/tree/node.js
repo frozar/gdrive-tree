@@ -1,7 +1,7 @@
 import { unwrap, produce } from "solid-js/store";
 import _ from "lodash";
 
-import { setStore } from "../../index";
+import { store, setStore } from "../../index";
 
 function getNodePathKeyByPredicat(root, predicat, unwraped) {
   const nodesToVisit = unwraped ? [unwrap(root)] : [root];
@@ -206,7 +206,7 @@ function getNodePathKeyById(root, id, unwraped) {
 
 // TODO: big task
 // Use a HashSet 'id' -> node to avoid to use a graph to store node
-export function getNodeById(rootNode, id, unwraped = false) {
+function getNodeById_(rootNode, id, unwraped = false) {
   const res = getNodePathKeyById(rootNode, id, unwraped);
   if (res === null) {
     return null;
@@ -214,6 +214,10 @@ export function getNodeById(rootNode, id, unwraped = false) {
 
   const [nodePath, _] = res;
   return nodePath.pop();
+}
+
+export function getNodeById(id, unwraped = false) {
+  return getNodeById_(store.nodes.rootNode, id, unwraped);
 }
 
 export function getNodePathByNode(node) {
@@ -226,8 +230,8 @@ export function getNodePathByNode(node) {
   return nodePath.reverse();
 }
 
-function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
-  let targetNode = getNodeById(rootNode, id);
+function setNodeById_(rootNode, id, objUpdatesOrFunctionUpdates) {
+  let targetNode = getNodeById_(rootNode, id);
 
   if (targetNode === null) {
     return;
@@ -249,10 +253,10 @@ function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
   }
 }
 
-export function setNodeInStoreById(id, objUpdatesOrFunctionUpdates) {
+export function setNodeById(id, objUpdatesOrFunctionUpdates) {
   setStore(
     produce((s) => {
-      setNodeById(s.nodes.rootNode, id, objUpdatesOrFunctionUpdates);
+      setNodeById_(s.nodes.rootNode, id, objUpdatesOrFunctionUpdates);
     })
   );
 }
