@@ -226,6 +226,28 @@ const Tree = ({ node }) => {
 
       handleArrowDown({ increment: nbMovePage, cycle: false });
     }
+
+    if (event.code === "Home") {
+      const resTabbable = tabbable(treeContainerRef);
+      for (const elt of resTabbable) {
+        if (isElementVisible(elt)) {
+          elt.focus();
+          break;
+        }
+      }
+    }
+
+    if (event.code === "End") {
+      const resTabbable = tabbable(treeContainerRef).reverse();
+      for (const elt of resTabbable) {
+        if (isElementVisible(elt)) {
+          elt.focus();
+          break;
+        }
+      }
+    }
+
+    // console.log("event.code", event.code);
   }
 
   onMount(() => {
