@@ -42,3 +42,6 @@ if (import.meta.hot) {
   // import.meta.hot.accept();
   // import.meta.hot.dispose(cleanup);
 }
+
+// TODO: watch the resize event to set the body width and eventually display
+//      an horizontal scroll bar

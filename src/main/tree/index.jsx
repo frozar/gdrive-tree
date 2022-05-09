@@ -1,5 +1,4 @@
-import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
-import { unwrap } from "solid-js/store";
+import { createEffect, onMount, onCleanup } from "solid-js";
 
 import { tabbable } from "tabbable";
 
@@ -9,7 +8,10 @@ import {
   findNearestLowerFocusableElement,
   findNearestUpperLiWithId,
   getParentElements,
+  adjustBodyWidth,
+  isElementVisible,
 } from "./htmlElement";
+import { customTransitionDuration } from "../../globalConstant";
 import { store } from "../../index";
 
 const Tree = ({ node }) => {
@@ -29,18 +31,6 @@ const Tree = ({ node }) => {
   const height = () => {
     return node.height;
   };
-
-  /**
-   * Check if every parent elements are expanded, so visible
-   * @param {*} element
-   * @returns
-   */
-  function isElementVisible(element) {
-    const listParent = getParentElements(element);
-    const isNotVisible = listParent.some((elt) => elt.style.height === "0px");
-
-    return !isNotVisible;
-  }
 
   function findFocusableElement(
     resTabbable,
@@ -289,6 +279,7 @@ const Tree = ({ node }) => {
     }
   });
 
+  // Set body width to display an horizontal scroll bar
   createEffect(() => {
     isExpanded();
 
@@ -296,41 +287,9 @@ const Tree = ({ node }) => {
       return;
     }
 
-    // Every node that the width has to be checked
-    let listElement = Array.from(
-      document.querySelectorAll("span.selectable")
-    ).filter((elt) => isElementVisible(elt));
-
-    let longestElement;
-    let tmpMax = 0;
-    const maxWidth = listElement
-      .map((elt) => {
-        const rect = elt.getBoundingClientRect();
-        if (tmpMax < rect.x + rect.width) {
-          tmpMax = rect.x + rect.width;
-          longestElement = elt;
-        }
-        return rect.x + rect.width;
-      })
-      .reduce((acc, currentVal) => {
-        return Math.max(acc, currentVal);
-      }, 0);
-
-    const body = document.body;
-
-    if (window.innerWidth < maxWidth) {
-      const bodyWidth = body.style.width;
-      const bodyWidthWithoutUnit = bodyWidth.replace("px", "");
-      const widthOffset = 10;
-
-      const effectiveWidth = Math.max(
-        +bodyWidthWithoutUnit,
-        maxWidth + widthOffset
-      );
-      body.style.width = `${effectiveWidth}px`;
-    } else {
-      body.style.width = "";
-    }
+    setTimeout(() => {
+      adjustBodyWidth();
+    }, customTransitionDuration);
   });
 
   return (

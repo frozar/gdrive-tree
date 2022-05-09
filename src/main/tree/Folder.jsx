@@ -7,9 +7,11 @@ import {
   findChildElementWithPredicat,
   findNearestLowerFocusableElement,
   findNearestUpperLiWithId,
+  adjustBodyWidth,
 } from "./htmlElement";
 
 import SpinningWheel from "../../SpinningWheel";
+import { customTransitionDuration } from "../../globalConstant";
 import { store } from "../../index";
 
 // TODO: use solidjs-icon librairy
@@ -197,23 +199,18 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
 
   // TODO: fix the body width in case a long name is focus and so scale up
   function handleFocus(e) {
-    // console.log("Focus");
-    // const rect = e.target.getBoundingClientRect();
-    // console.log("rect", rect);
+    setTimeout(() => {
+      adjustBodyWidth();
+    }, customTransitionDuration);
   }
 
   function handleBlur(e) {
-    // console.log("Blur");
-    // const rect = e.target.getBoundingClientRect();
-    // console.log("rect", rect);
+    setTimeout(() => {
+      adjustBodyWidth();
+    }, customTransitionDuration);
   }
 
   onMount(() => {
-    // const elementBody = document.getElementsByTagName("body").item(0);
-    // const rect = nameContentRef.getBoundingClientRect();
-    // const textWidth = rect.x + rect.width;
-    // if (elementBody.style.width.length === 0) {
-    // }
     nameRef.addEventListener("click", handleClickName);
     nameRef.addEventListener("focus", handleFocus);
     nameRef.addEventListener("blur", handleBlur);
