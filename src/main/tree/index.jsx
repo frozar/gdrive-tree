@@ -59,26 +59,20 @@ const Tree = ({ node }) => {
     }
   }
 
-  function getTabbableElement() {
-    return tabbable(treeContainerRef);
-  }
-
-  function findNextFocusableElement(cycle) {
-    const resTabbable = getTabbableElement();
+  function findFocusableElementSanity(increment, cycle) {
+    const resTabbable = tabbable(treeContainerRef).filter((elt) =>
+      isElementVisible(elt)
+    );
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
     }
-    return findFocusableElement(resTabbable, indexTabbableElement, +1, cycle);
-  }
-
-  function findPreviousFocusableElement(cycle) {
-    const resTabbable = getTabbableElement();
-    const indexTabbableElement = resTabbable.indexOf(document.activeElement);
-    if (indexTabbableElement === -1) {
-      return null;
-    }
-    return findFocusableElement(resTabbable, indexTabbableElement, -1, cycle);
+    return findFocusableElement(
+      resTabbable,
+      indexTabbableElement,
+      increment,
+      cycle
+    );
   }
 
   function handleKeyDown(event) {
@@ -90,33 +84,35 @@ const Tree = ({ node }) => {
       nextFocusableElement.focus();
     }
 
-    if (event.code === "Tab") {
-      event.preventDefault();
-
-      const nextFocusableElement =
-        event.shiftKey === false
-          ? findNextFocusableElement(true)
-          : findPreviousFocusableElement(true);
-
+    function findAndFocusElement(opt, cycleDefault, incrementDefault) {
+      let cycle = cycleDefault;
+      let increment = incrementDefault;
+      if (opt && typeof opt.cycle === "boolean") {
+        cycle = opt.cycle;
+      }
+      if (opt && typeof opt.increment === "number") {
+        increment = opt.increment;
+      }
+      const nextFocusableElement = findFocusableElementSanity(increment, cycle);
       focusElementIfFound(nextFocusableElement);
     }
 
     function handleArrowUp(opt) {
-      let cycle = true;
-      if (opt && typeof opt.cycle === "boolean") {
-        cycle = opt.cycle;
-      }
-      const nextFocusableElement = findPreviousFocusableElement(cycle);
-      focusElementIfFound(nextFocusableElement);
+      findAndFocusElement(opt, true, -1);
     }
 
     function handleArrowDown(opt) {
-      let cycle = true;
-      if (opt && typeof opt.cycle === "boolean") {
-        cycle = opt.cycle;
+      findAndFocusElement(opt, true, 1);
+    }
+
+    if (event.code === "Tab") {
+      event.preventDefault();
+
+      if (!event.shiftKey) {
+        handleArrowDown();
+      } else {
+        handleArrowUp();
       }
-      const nextFocusableElement = findNextFocusableElement(cycle);
-      focusElementIfFound(nextFocusableElement);
     }
 
     if (event.code === "ArrowUp") {
@@ -222,17 +218,13 @@ const Tree = ({ node }) => {
     if (event.code === "PageUp") {
       event.preventDefault();
 
-      for (const _ of Array(nbMovePage).keys()) {
-        handleArrowUp({ cycle: false });
-      }
+      handleArrowUp({ increment: -nbMovePage, cycle: false });
     }
 
     if (event.code === "PageDown") {
       event.preventDefault();
 
-      for (const _ of Array(nbMovePage).keys()) {
-        handleArrowDown({ cycle: false });
-      }
+      handleArrowDown({ increment: nbMovePage, cycle: false });
     }
   }
 
