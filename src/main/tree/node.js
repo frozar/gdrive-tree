@@ -42,15 +42,19 @@ function getNodePathKeyByPredicat(root, predicat, unwraped) {
   return null;
 }
 
+const verboseGetNodePathKeyById = false;
+
 function getNodePathKeyById(root, id, unwraped) {
   const res = getNodePathKeyByPredicat(root, (n) => n.id === id, unwraped);
 
   if (res) {
     return res;
   } else {
-    console.log("root", root);
-    console.log("id", id);
-    return new Error(`Cannot find targetNode "${id}"`);
+    if (verboseGetNodePathKeyById) {
+      console.error(`Cannot find targetNode with id "${id}"`);
+      console.error("root", root);
+    }
+    return null;
   }
 }
 
@@ -203,7 +207,12 @@ function getNodePathKeyById(root, id, unwraped) {
 // TODO: big task
 // Use a HashSet 'id' -> node to avoid to use a graph to store node
 export function getNodeById(rootNode, id, unwraped = false) {
-  const [nodePath, _] = getNodePathKeyById(rootNode, id, unwraped);
+  const res = getNodePathKeyById(rootNode, id, unwraped);
+  if (res === null) {
+    return null;
+  }
+
+  const [nodePath, _] = res;
   return nodePath.pop();
 }
 
@@ -219,20 +228,23 @@ export function getNodePathByNode(node) {
 
 function setNodeById(rootNode, id, objUpdatesOrFunctionUpdates) {
   let targetNode = getNodeById(rootNode, id);
-  if (targetNode) {
-    if (typeof objUpdatesOrFunctionUpdates === "object") {
-      const objUpdates = objUpdatesOrFunctionUpdates;
-      for (const [k, v] of Object.entries(objUpdates)) {
-        targetNode[k] = v;
-      }
-    }
 
-    if (typeof objUpdatesOrFunctionUpdates === "function") {
-      const fUpdates = objUpdatesOrFunctionUpdates;
-      const newTargetNode = fUpdates(unwrap(targetNode));
-      for (const key of Object.keys(newTargetNode)) {
-        targetNode[key] = newTargetNode[key];
-      }
+  if (targetNode === null) {
+    return;
+  }
+
+  if (typeof objUpdatesOrFunctionUpdates === "object") {
+    const objUpdates = objUpdatesOrFunctionUpdates;
+    for (const [k, v] of Object.entries(objUpdates)) {
+      targetNode[k] = v;
+    }
+  }
+
+  if (typeof objUpdatesOrFunctionUpdates === "function") {
+    const fUpdates = objUpdatesOrFunctionUpdates;
+    const newTargetNode = fUpdates(unwrap(targetNode));
+    for (const key of Object.keys(newTargetNode)) {
+      targetNode[key] = newTargetNode[key];
     }
   }
 }

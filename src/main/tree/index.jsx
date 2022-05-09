@@ -1,5 +1,4 @@
-import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
-import { unwrap } from "solid-js/store";
+import { createEffect, onMount, onCleanup } from "solid-js";
 
 import { tabbable } from "tabbable";
 
@@ -9,7 +8,10 @@ import {
   findNearestLowerFocusableElement,
   findNearestUpperLiWithId,
   getParentElements,
+  adjustBodyWidth,
+  isElementVisible,
 } from "./htmlElement";
+import { customTransitionDuration } from "../../globalConstant";
 import { store } from "../../index";
 
 const Tree = ({ node }) => {
@@ -29,18 +31,6 @@ const Tree = ({ node }) => {
   const height = () => {
     return node.height;
   };
-
-  /**
-   * Check if every parent elements are expanded, so visible
-   * @param {*} element
-   * @returns
-   */
-  function isElementVisible(element) {
-    const listParent = getParentElements(element);
-    const isNotVisible = listParent.some((elt) => elt.style.height === "0px");
-
-    return !isNotVisible;
-  }
 
   function findFocusableElement(
     resTabbable,
@@ -69,26 +59,20 @@ const Tree = ({ node }) => {
     }
   }
 
-  function getTabbableElement() {
-    return tabbable(treeContainerRef);
-  }
-
-  function findNextFocusableElement(cycle) {
-    const resTabbable = getTabbableElement();
+  function findFocusableElementSanity(increment, cycle) {
+    const resTabbable = tabbable(treeContainerRef).filter((elt) =>
+      isElementVisible(elt)
+    );
     const indexTabbableElement = resTabbable.indexOf(document.activeElement);
     if (indexTabbableElement === -1) {
       return null;
     }
-    return findFocusableElement(resTabbable, indexTabbableElement, +1, cycle);
-  }
-
-  function findPreviousFocusableElement(cycle) {
-    const resTabbable = getTabbableElement();
-    const indexTabbableElement = resTabbable.indexOf(document.activeElement);
-    if (indexTabbableElement === -1) {
-      return null;
-    }
-    return findFocusableElement(resTabbable, indexTabbableElement, -1, cycle);
+    return findFocusableElement(
+      resTabbable,
+      indexTabbableElement,
+      increment,
+      cycle
+    );
   }
 
   function handleKeyDown(event) {
@@ -100,33 +84,35 @@ const Tree = ({ node }) => {
       nextFocusableElement.focus();
     }
 
-    if (event.code === "Tab") {
-      event.preventDefault();
-
-      const nextFocusableElement =
-        event.shiftKey === false
-          ? findNextFocusableElement(true)
-          : findPreviousFocusableElement(true);
-
+    function findAndFocusElement(opt, cycleDefault, incrementDefault) {
+      let cycle = cycleDefault;
+      let increment = incrementDefault;
+      if (opt && typeof opt.cycle === "boolean") {
+        cycle = opt.cycle;
+      }
+      if (opt && typeof opt.increment === "number") {
+        increment = opt.increment;
+      }
+      const nextFocusableElement = findFocusableElementSanity(increment, cycle);
       focusElementIfFound(nextFocusableElement);
     }
 
     function handleArrowUp(opt) {
-      let cycle = true;
-      if (opt && typeof opt.cycle === "boolean") {
-        cycle = opt.cycle;
-      }
-      const nextFocusableElement = findPreviousFocusableElement(cycle);
-      focusElementIfFound(nextFocusableElement);
+      findAndFocusElement(opt, true, -1);
     }
 
     function handleArrowDown(opt) {
-      let cycle = true;
-      if (opt && typeof opt.cycle === "boolean") {
-        cycle = opt.cycle;
+      findAndFocusElement(opt, true, 1);
+    }
+
+    if (event.code === "Tab") {
+      event.preventDefault();
+
+      if (!event.shiftKey) {
+        handleArrowDown();
+      } else {
+        handleArrowUp();
       }
-      const nextFocusableElement = findNextFocusableElement(cycle);
-      focusElementIfFound(nextFocusableElement);
     }
 
     if (event.code === "ArrowUp") {
@@ -232,18 +218,36 @@ const Tree = ({ node }) => {
     if (event.code === "PageUp") {
       event.preventDefault();
 
-      for (const _ of Array(nbMovePage).keys()) {
-        handleArrowUp({ cycle: false });
-      }
+      handleArrowUp({ increment: -nbMovePage, cycle: false });
     }
 
     if (event.code === "PageDown") {
       event.preventDefault();
 
-      for (const _ of Array(nbMovePage).keys()) {
-        handleArrowDown({ cycle: false });
+      handleArrowDown({ increment: nbMovePage, cycle: false });
+    }
+
+    if (event.code === "Home") {
+      const resTabbable = tabbable(treeContainerRef);
+      for (const elt of resTabbable) {
+        if (isElementVisible(elt)) {
+          elt.focus();
+          break;
+        }
       }
     }
+
+    if (event.code === "End") {
+      const resTabbable = tabbable(treeContainerRef).reverse();
+      for (const elt of resTabbable) {
+        if (isElementVisible(elt)) {
+          elt.focus();
+          break;
+        }
+      }
+    }
+
+    // console.log("event.code", event.code);
   }
 
   onMount(() => {
@@ -289,6 +293,7 @@ const Tree = ({ node }) => {
     }
   });
 
+  // Set body width to display an horizontal scroll bar
   createEffect(() => {
     isExpanded();
 
@@ -296,41 +301,9 @@ const Tree = ({ node }) => {
       return;
     }
 
-    // Every node that the width has to be checked
-    let listElement = Array.from(
-      document.querySelectorAll("span.selectable")
-    ).filter((elt) => isElementVisible(elt));
-
-    let longestElement;
-    let tmpMax = 0;
-    const maxWidth = listElement
-      .map((elt) => {
-        const rect = elt.getBoundingClientRect();
-        if (tmpMax < rect.x + rect.width) {
-          tmpMax = rect.x + rect.width;
-          longestElement = elt;
-        }
-        return rect.x + rect.width;
-      })
-      .reduce((acc, currentVal) => {
-        return Math.max(acc, currentVal);
-      }, 0);
-
-    const body = document.body;
-
-    if (window.innerWidth < maxWidth) {
-      const bodyWidth = body.style.width;
-      const bodyWidthWithoutUnit = bodyWidth.replace("px", "");
-      const widthOffset = 10;
-
-      const effectiveWidth = Math.max(
-        +bodyWidthWithoutUnit,
-        maxWidth + widthOffset
-      );
-      body.style.width = `${effectiveWidth}px`;
-    } else {
-      body.style.width = "";
-    }
+    setTimeout(() => {
+      adjustBodyWidth();
+    }, customTransitionDuration);
   });
 
   return (
