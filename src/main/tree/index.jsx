@@ -14,22 +14,30 @@ import {
 import { customTransitionDuration } from "../../globalConstant";
 import { store } from "../../index";
 
-const Tree = ({ node }) => {
+const Tree = ({ nodeTOTO, id }) => {
   let treeContainerRef;
   let treeRef;
 
-  const isRoot = node.id === "root";
+  // const isRoot = node.id === "root";
+  const isRoot = id === "root";
+
+  const node = () => {
+    return getNodeById(id);
+  };
 
   const nodes = () => {
-    return node.subNodes;
+    // return node.subNodes;
+    return node().subNodesId.map((idNode) => getNodeById(idNode));
   };
 
   const isExpanded = () => {
-    return node.isExpanded;
+    // return node.isExpanded;
+    return node().isExpanded;
   };
 
   const height = () => {
-    return node.height;
+    // return node.height;
+    return node().height;
   };
 
   function findFocusableElement(

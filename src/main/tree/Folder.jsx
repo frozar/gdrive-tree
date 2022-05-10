@@ -2,7 +2,13 @@ import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
 import Tree from "./index";
-import { setNodeById, getRicherNodes, getNodePathByNode } from "./node";
+import {
+  setNodeById,
+  getRicherNodes,
+  getNodePathByNode,
+  setNodesContent,
+  getNodeById,
+} from "./node";
 import {
   findChildElementWithPredicat,
   findNearestLowerFocusableElement,
@@ -65,11 +71,15 @@ async function fetchSubNodes(node, fetchState, setFetchState) {
   if (fetchState() !== "done") {
     try {
       setFetchState("running");
-      // TODO : enbedded deeper the call to the getRicherNodes() function
-      const nodes = await getSortedNodesFromDirectory(999, "*", node.id);
-      const richerNodes = getRicherNodes(nodes, node);
 
-      setNodeById(node.id, { subNodes: richerNodes });
+      const nodes = await getSortedNodesFromDirectory(999, "*", node.id);
+      const richerNodes = getRicherNodes(nodes, node.id);
+
+      // console.log("before set node", node);
+      // setNodeById(node.id, { subNodes: richerNodes });
+
+      setNodesContent(richerNodes);
+      setNodeById(node.id, { subNodesId: richerNodes.map((n) => n.id) });
 
       setFetchState("done");
     } catch (error) {
@@ -79,7 +89,7 @@ async function fetchSubNodes(node, fetchState, setFetchState) {
   }
 }
 
-const Folder = ({ node, setParentHeight, mustAutofocus }) => {
+const Folder = ({ node, mustAutofocus }) => {
   const [fetchState, setFetchState] = createSignal("init");
 
   const SmallSpinningWheel = () => {
@@ -176,7 +186,14 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   });
 
   const isParentExpanded = () => {
-    return node.parentNode.isExpanded;
+    if (!node.parentNodeId) {
+      console.log("parentNodeId is undefined");
+      console.log(node);
+      return false;
+    } else {
+      // return node.parentNode.isExpanded;
+      return getNodeById(node.parentNodeId).isExpanded;
+    }
   };
 
   // Fetch only if the parent tree has been expanded once.
@@ -298,9 +315,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
         </span>
         {fetchState() === "running" && <SmallSpinningWheel />}
       </span>
-      {fetchState() === "done" && (
-        <Tree node={node} setParentHeight={setParentHeight} />
-      )}
+      {fetchState() === "done" && <Tree id={node.id} />}
     </li>
   );
 };

@@ -1,62 +1,63 @@
-import { unwrap, produce } from "solid-js/store";
+// import { unwrap, produce } from "solid-js/store";
+import { produce } from "solid-js/store";
 import _ from "lodash";
 
 import { store, setStore } from "../../index";
 
-function getNodePathKeyByPredicat(root, predicat, unwraped) {
-  const nodesToVisit = unwraped ? [unwrap(root)] : [root];
+// function getNodePathKeyByPredicat(root, predicat, unwraped) {
+//   const nodesToVisit = unwraped ? [unwrap(root)] : [root];
 
-  const key = [];
-  const nodePath = [];
-  const lengthStack = [nodesToVisit.length];
-  while (0 < nodesToVisit.length && 0 < lengthStack.length) {
-    if (lengthStack.at(-1) <= key.at(-1)) {
-      nodePath.pop();
-      key.pop();
-      lengthStack.pop();
-      if (0 < key.length) {
-        key[key.length - 1]++;
-        continue;
-      } else {
-        break;
-      }
-    }
+//   const key = [];
+//   const nodePath = [];
+//   const lengthStack = [nodesToVisit.length];
+//   while (0 < nodesToVisit.length && 0 < lengthStack.length) {
+//     if (lengthStack.at(-1) <= key.at(-1)) {
+//       nodePath.pop();
+//       key.pop();
+//       lengthStack.pop();
+//       if (0 < key.length) {
+//         key[key.length - 1]++;
+//         continue;
+//       } else {
+//         break;
+//       }
+//     }
 
-    let currentNode = nodesToVisit.pop();
-    nodePath.push(currentNode);
+//     let currentNode = nodesToVisit.pop();
+//     nodePath.push(currentNode);
 
-    if (predicat(currentNode)) {
-      return [nodePath, key];
-    }
+//     if (predicat(currentNode)) {
+//       return [nodePath, key];
+//     }
 
-    if (currentNode.subNodes) {
-      lengthStack.push(currentNode.subNodes.length);
-      nodesToVisit.push(...[...currentNode.subNodes].reverse());
-      key.push(0);
-      continue;
-    }
+//     if (currentNode.subNodes) {
+//       lengthStack.push(currentNode.subNodes.length);
+//       nodesToVisit.push(...[...currentNode.subNodes].reverse());
+//       key.push(0);
+//       continue;
+//     }
 
-    nodePath.pop();
-    key[key.length - 1]++;
-  }
-  return null;
-}
+//     nodePath.pop();
+//     key[key.length - 1]++;
+//   }
+//   return null;
+// }
 
-const verboseGetNodePathKeyById = false;
+// const verboseGetNodePathKeyById = false;
 
-function getNodePathKeyById(root, id, unwraped) {
-  const res = getNodePathKeyByPredicat(root, (n) => n.id === id, unwraped);
+// function getNodePathKeyById(root, id, unwraped) {
+//   const res = getNodePathKeyByPredicat(root, (n) => n.id === id, unwraped);
 
-  if (res) {
-    return res;
-  } else {
-    if (verboseGetNodePathKeyById) {
-      console.error(`Cannot find targetNode with id "${id}"`);
-      console.error("root", root);
-    }
-    return null;
-  }
-}
+//   if (res) {
+//     return res;
+//   } else {
+//     if (verboseGetNodePathKeyById) {
+//       console.error(`Cannot find targetNode with id "${id}"`);
+//       console.error("root", root);
+//     }
+//     return null;
+//   }
+// }
 
 // // Test of findKey()
 // console.log("test [],", getNodePathKeyById({ id: "root" }, "root")[1]);
@@ -206,57 +207,145 @@ function getNodePathKeyById(root, id, unwraped) {
 
 // TODO: big task
 // Use a HashSet 'id' -> node to avoid to use a graph to store node
-function getNodeById_(rootNode, id, unwraped = false) {
-  const res = getNodePathKeyById(rootNode, id, unwraped);
-  if (res === null) {
+function getNodeById_(nodes, id, unwraped = false) {
+  // const rootNode = nodes.rootNode;
+  // const res = getNodePathKeyById(rootNode, id, unwraped);
+  // if (res === null) {
+  //   return null;
+  // }
+
+  // const [nodePath, _] = res;
+  // return nodePath.pop();
+
+  let res2 = nodes.content[id];
+  if (!res2) {
     return null;
   }
 
-  const [nodePath, _] = res;
-  return nodePath.pop();
+  // if (unwraped) {
+  //   return unwrap(res2);
+  // } else {
+  //   return res2;
+  // }
+  return res2;
 }
 
 export function getNodeById(id, unwraped = false) {
-  return getNodeById_(store.nodes.rootNode, id, unwraped);
+  return getNodeById_(store.nodes, id, unwraped);
 }
 
 export function getNodePathByNode(node) {
   const nodePath = [node];
-  let currentNode = node.parentNode;
+  // let currentNode = node.parentNode;
+  let currentNode = getNodeById(node.parentNodeId);
   while (currentNode) {
     nodePath.push(currentNode);
-    currentNode = currentNode.parentNode;
+    // currentNode = currentNode.parentNode;
+    currentNode = getNodeById(currentNode.parentNodeId);
   }
   return nodePath.reverse();
 }
 
-function setNodeById_(rootNode, id, objUpdatesOrFunctionUpdates) {
-  let targetNode = getNodeById_(rootNode, id);
+function setNodeById_(nodes, id, objUpdatesOrFunctionUpdates) {
+  // const rootNode = nodes.rootNode;
+  // // const targetNode = getNodeById_(rootNode, id);
+  // const targetNode = getNodeById_(nodes, id);
 
-  if (targetNode === null) {
+  // if (targetNode === null) {
+  //   return;
+  // }
+
+  // if (typeof objUpdatesOrFunctionUpdates === "object") {
+  //   const objUpdates = objUpdatesOrFunctionUpdates;
+  //   for (const [k, v] of Object.entries(objUpdates)) {
+  //     targetNode[k] = v;
+  //   }
+  // }
+
+  // if (typeof objUpdatesOrFunctionUpdates === "function") {
+  //   const fUpdates = objUpdatesOrFunctionUpdates;
+  //   const newTargetNode = fUpdates(unwrap(targetNode));
+  //   for (const key of Object.keys(newTargetNode)) {
+  //     targetNode[key] = newTargetNode[key];
+  //   }
+  // }
+
+  const targetNode = nodes.content[id];
+  // console.log("BEG targetNode", targetNode);
+  if (!targetNode) {
+    console.error(`Cannot find targetNode for id: [${id}]`);
+    console.trace();
     return;
   }
 
+  // if (typeof objUpdatesOrFunctionUpdates === "object") {
+  //   const objUpdates = objUpdatesOrFunctionUpdates;
+  //   console.log("objUpdates", objUpdates);
+  //   for (const [k, v] of Object.entries(objUpdates)) {
+  //     targetNode[k] = v;
+  //   }
+  // }
+
+  // if (typeof objUpdatesOrFunctionUpdates === "function") {
+  //   const fUpdates = objUpdatesOrFunctionUpdates;
+  //   const newTargetNode = fUpdates(unwrap(targetNode));
+  //   console.log("newTargetNode", newTargetNode);
+  //   for (const key of Object.keys(newTargetNode)) {
+  //     targetNode[key] = newTargetNode[key];
+  //   }
+  // }
+
+  let objUpdates;
   if (typeof objUpdatesOrFunctionUpdates === "object") {
-    const objUpdates = objUpdatesOrFunctionUpdates;
-    for (const [k, v] of Object.entries(objUpdates)) {
-      targetNode[k] = v;
-    }
+    objUpdates = objUpdatesOrFunctionUpdates;
   }
 
   if (typeof objUpdatesOrFunctionUpdates === "function") {
     const fUpdates = objUpdatesOrFunctionUpdates;
-    const newTargetNode = fUpdates(unwrap(targetNode));
-    for (const key of Object.keys(newTargetNode)) {
-      targetNode[key] = newTargetNode[key];
-    }
+    // objUpdates = fUpdates(unwrap(targetNode));
+    objUpdates = fUpdates(targetNode);
   }
+
+  if (!objUpdates) {
+    return;
+  }
+
+  // TODO: create a function of equality check between node because
+  //       fields like parentNode and subNodes must be handle carefully.
+  //       Not possible with the basic isEqual from lodash
+  for (const [k, v] of Object.entries(objUpdates)) {
+    // if (!_.isEqual(targetNode[k], v)) {
+    targetNode[k] = v;
+    // }
+  }
+
+  // // Deal if subNodes are submitted
+  // if (Object.keys(objUpdates).includes("subNodes")) {
+  //   // for (const [nodeId, node] of objUpdates["subNodes"]) {
+  //   for (const node of objUpdates["subNodes"]) {
+  //     // if (!_.isEqual(nodes.content[nodeId], node)) {
+  //     nodes.content[node.id] = node;
+  //     // }
+  //   }
+  // }
+
+  // console.log("END targetNode", targetNode);
+}
+
+export function setNodesContent(nodes) {
+  setStore(
+    produce((s) => {
+      for (const node of nodes) {
+        s.nodes.content[node.id] = node;
+      }
+    })
+  );
 }
 
 export function setNodeById(id, objUpdatesOrFunctionUpdates) {
   setStore(
     produce((s) => {
-      setNodeById_(s.nodes.rootNode, id, objUpdatesOrFunctionUpdates);
+      setNodeById_(s.nodes, id, objUpdatesOrFunctionUpdates);
     })
   );
 }
@@ -265,20 +354,20 @@ export function isFolder(node) {
   return node.mimeType === "application/vnd.google-apps.folder";
 }
 
-export function getRicherNode(node, parentNode) {
+export function getRicherNode(node, parentNodeId) {
   if (isFolder(node)) {
     return {
       ...node,
-      parentNode,
-      subNodes: null,
+      parentNodeId,
+      subNodesId: null,
       isExpanded: false,
       height: 0,
     };
   } else {
-    return { ...node, parentNode };
+    return { ...node, parentNodeId };
   }
 }
 
-export function getRicherNodes(nodes, parentNode) {
-  return [...nodes].map((n) => getRicherNode(n, parentNode));
+export function getRicherNodes(nodes, parentNodeId) {
+  return [...nodes].map((n) => getRicherNode(n, parentNodeId));
 }

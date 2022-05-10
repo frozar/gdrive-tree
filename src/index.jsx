@@ -7,20 +7,27 @@ import "./init";
 import App from "./App";
 import { getRicherNode } from "./main/tree/node";
 
-const defaultRootNode = getRicherNode(
-  {
-    id: "root",
-    name: "ROOT",
-    mimeType: "application/vnd.google-apps.folder",
-  },
-  null
-);
+const defaultRootNode = (() => {
+  const res = {
+    ...getRicherNode(
+      {
+        id: "root",
+        name: "ROOT",
+        mimeType: "application/vnd.google-apps.folder",
+      },
+      null
+    ),
+    isExpanded: true,
+  };
+  delete res.height;
+  return res;
+})();
 
 const defaultStore = {
   isExternalLibLoaded: false,
   hasCredential: false,
   nodes: {
-    rootNode: defaultRootNode,
+    // rootNode: defaultRootNode,
     content: { root: defaultRootNode },
     isInitialised: false,
     isLoading: false,

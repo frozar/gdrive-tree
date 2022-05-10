@@ -88,10 +88,8 @@ async function loopRequest(listOptions) {
         // Deal with the response for a new token
         tokenClient.callback = (resp) => {
           if (resp.error !== undefined) {
-            // setStore("isAuthorized", () => false);
             reject(resp);
           }
-          // setStore("isAuthorized", () => true);
           resolve(resp);
         };
         // Ask for a new token
@@ -256,14 +254,81 @@ export async function triggerFilesRequest(initSwitch) {
 
   let newNodes = await grabFiles(initSwitch);
 
-  const richerNodes = getRicherNodes(newNodes, store.nodes.rootNode);
-  if (!_.isEqual(store.nodes.rootNode.subNodes, richerNodes)) {
-    setStore("nodes", (current) => ({
-      ...current,
-      isInitialised: true,
-      isLoading: false,
-      rootNode: { ...current.rootNode, subNodes: richerNodes },
-    }));
+  // const richerNodes = getRicherNodes(newNodes, store.nodes.rootNode);
+  const richerNodes = getRicherNodes(newNodes, store.nodes.content["root"].id);
+  // if (!_.isEqual(store.nodes.rootNode.subNodes, richerNodes)) {
+  //   setStore("nodes", (current) => ({
+  //     ...current,
+  //     isInitialised: true,
+  //     isLoading: false,
+  //     rootNode: { ...current.rootNode, subNodes: richerNodes },
+  //   }));
+  // } else {
+  //   setStore("nodes", (current) => ({
+  //     ...current,
+  //     isInitialised: true,
+  //     isLoading: false,
+  //   }));
+  // }
+
+  const nodesToUpdate = {};
+  let hasUpdated = false;
+
+  // if (!_.isEqual(store.nodes.content["root"].subNodes, richerNodes)) {
+  if (
+    !_.isEqual(
+      store.nodes.content["root"].subNodesId,
+      richerNodes.map((n) => n.id)
+    )
+  ) {
+    nodesToUpdate["root"] = {
+      ...store.nodes.content["root"],
+      subNodesId: richerNodes.map((n) => n.id),
+    };
+    // if (!store.nodes.content["root"].subNodes) {
+    //   // store.nodes.content["root"].subNodes = richerNodes;
+    //   nodesToUpdate["root"] = {
+    //     ...store.nodes.content["root"],
+    //     subNodes: richerNodes
+    //   }
+    //   hasUpdated = true;
+    // } else {
+    //   const rootSubNodes = store.nodes.content["root"].subNodes;
+    //   const newSubNodes = [];
+    //   for (const richerNode of richerNodes) {
+    //     const alreadyExist = rootSubNodes.some((subNode) =>
+    //       _.isEqual(subNode, richerNode)
+    //     );
+    //     if (!alreadyExist) {
+    //       // rootSubNodes.push(richerNode);
+    //       newSubNodes.push(richerNode);
+    //       hasUpdated = true;
+    //     }
+    //   }
+    //   nodesToUpdate["root"] = {
+    //     ...store.nodes.content["root"],
+    //     subNodes: [...store.nodes.content["root"].subNodes, ...newSubNodes],
+    //   }
+    // }
+  }
+
+  for (const node of richerNodes) {
+    if (!_.isEqual(node, store.nodes.content[node.id])) {
+      nodesToUpdate[node.id] = node;
+      hasUpdated = true;
+    }
+  }
+  console.log("hasUpdated", hasUpdated);
+  if (hasUpdated) {
+    console.log("nodesToUpdate", nodesToUpdate);
+    if (Object.keys(nodesToUpdate).length) {
+      setStore("nodes", (current) => ({
+        ...current,
+        isInitialised: true,
+        isLoading: false,
+        content: { ...current.content, ...nodesToUpdate },
+      }));
+    }
   } else {
     setStore("nodes", (current) => ({
       ...current,
