@@ -5,19 +5,23 @@ import { Router } from "solid-app-router";
 import "./index.css";
 import "./init";
 import App from "./App";
+import { getRicherNode } from "./main/tree/node";
+
+const defaultRootNode = getRicherNode(
+  {
+    id: "root",
+    name: "ROOT",
+    mimeType: "application/vnd.google-apps.folder",
+  },
+  null
+);
 
 const defaultStore = {
   isExternalLibLoaded: false,
   hasCredential: false,
   nodes: {
-    rootNode: {
-      id: "root",
-      name: "ROOT",
-      parentNode: null,
-      isExpanded: true,
-      subNodes: null,
-      height: 0,
-    },
+    rootNode: defaultRootNode,
+    content: { root: defaultRootNode },
     isInitialised: false,
     isLoading: false,
   },

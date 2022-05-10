@@ -265,7 +265,7 @@ export function isFolder(node) {
   return node.mimeType === "application/vnd.google-apps.folder";
 }
 
-function getRicherNode(node, parentNode) {
+export function getRicherNode(node, parentNode) {
   if (isFolder(node)) {
     return {
       ...node,
