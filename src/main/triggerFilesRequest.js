@@ -254,62 +254,18 @@ export async function triggerFilesRequest(initSwitch) {
 
   let newNodes = await grabFiles(initSwitch);
 
-  // const richerNodes = getRicherNodes(newNodes, store.nodes.rootNode);
   const richerNodes = getRicherNodes(newNodes, store.nodes.content["root"].id);
-  // if (!_.isEqual(store.nodes.rootNode.subNodes, richerNodes)) {
-  //   setStore("nodes", (current) => ({
-  //     ...current,
-  //     isInitialised: true,
-  //     isLoading: false,
-  //     rootNode: { ...current.rootNode, subNodes: richerNodes },
-  //   }));
-  // } else {
-  //   setStore("nodes", (current) => ({
-  //     ...current,
-  //     isInitialised: true,
-  //     isLoading: false,
-  //   }));
-  // }
 
   const nodesToUpdate = {};
   let hasUpdated = false;
 
-  // if (!_.isEqual(store.nodes.content["root"].subNodes, richerNodes)) {
-  if (
-    !_.isEqual(
-      store.nodes.content["root"].subNodesId,
-      richerNodes.map((n) => n.id)
-    )
-  ) {
+  const newSubNodesId = richerNodes.map((n) => n.id);
+  if (!_.isEqual(store.nodes.content["root"].subNodesId, newSubNodesId)) {
     nodesToUpdate["root"] = {
       ...store.nodes.content["root"],
-      subNodesId: richerNodes.map((n) => n.id),
+      subNodesId: newSubNodesId,
     };
-    // if (!store.nodes.content["root"].subNodes) {
-    //   // store.nodes.content["root"].subNodes = richerNodes;
-    //   nodesToUpdate["root"] = {
-    //     ...store.nodes.content["root"],
-    //     subNodes: richerNodes
-    //   }
-    //   hasUpdated = true;
-    // } else {
-    //   const rootSubNodes = store.nodes.content["root"].subNodes;
-    //   const newSubNodes = [];
-    //   for (const richerNode of richerNodes) {
-    //     const alreadyExist = rootSubNodes.some((subNode) =>
-    //       _.isEqual(subNode, richerNode)
-    //     );
-    //     if (!alreadyExist) {
-    //       // rootSubNodes.push(richerNode);
-    //       newSubNodes.push(richerNode);
-    //       hasUpdated = true;
-    //     }
-    //   }
-    //   nodesToUpdate["root"] = {
-    //     ...store.nodes.content["root"],
-    //     subNodes: [...store.nodes.content["root"].subNodes, ...newSubNodes],
-    //   }
-    // }
+    hasUpdated = true;
   }
 
   for (const node of richerNodes) {
@@ -318,9 +274,8 @@ export async function triggerFilesRequest(initSwitch) {
       hasUpdated = true;
     }
   }
-  console.log("hasUpdated", hasUpdated);
+
   if (hasUpdated) {
-    console.log("nodesToUpdate", nodesToUpdate);
     if (Object.keys(nodesToUpdate).length) {
       setStore("nodes", (current) => ({
         ...current,

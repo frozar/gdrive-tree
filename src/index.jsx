@@ -27,7 +27,6 @@ const defaultStore = {
   isExternalLibLoaded: false,
   hasCredential: false,
   nodes: {
-    // rootNode: defaultRootNode,
     content: { root: defaultRootNode },
     isInitialised: false,
     isLoading: false,
@@ -36,7 +35,6 @@ const defaultStore = {
 
 export const [store, setStore] = createStore(defaultStore);
 
-// const cleanup =
 render(() => {
   return (
     <Router>
@@ -45,13 +43,8 @@ render(() => {
   );
 }, document.getElementById("app"));
 
-// Solution to avoid duplique instance of HTML after Hot Module Reload:
-// https://www.reddit.com/r/solidjs/comments/sfclv4/solidjs_with_vite_preventing_multiple_instances/
-
 if (import.meta.hot) {
-  console.log("Hot reload");
-  // import.meta.hot.accept();
-  // import.meta.hot.dispose(cleanup);
+  // console.log("Hot reload");
 }
 
 // TODO: watch the resize event to set the body width and eventually display

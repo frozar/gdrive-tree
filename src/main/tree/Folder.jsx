@@ -75,9 +75,6 @@ async function fetchSubNodes(node, fetchState, setFetchState) {
       const nodes = await getSortedNodesFromDirectory(999, "*", node.id);
       const richerNodes = getRicherNodes(nodes, node.id);
 
-      // console.log("before set node", node);
-      // setNodeById(node.id, { subNodes: richerNodes });
-
       setNodesContent(richerNodes);
       setNodeById(node.id, { subNodesId: richerNodes.map((n) => n.id) });
 
@@ -186,14 +183,7 @@ const Folder = ({ node, mustAutofocus }) => {
   });
 
   const isParentExpanded = () => {
-    if (!node.parentNodeId) {
-      console.log("parentNodeId is undefined");
-      console.log(node);
-      return false;
-    } else {
-      // return node.parentNode.isExpanded;
-      return getNodeById(node.parentNodeId).isExpanded;
-    }
+    return getNodeById(node.parentNodeId).isExpanded;
   };
 
   // Fetch only if the parent tree has been expanded once.

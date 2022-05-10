@@ -7,18 +7,15 @@ import { setNodeById, getNodeById, isFolder } from "./node";
 import {
   findNearestLowerFocusableElement,
   findNearestUpperLiWithId,
-  getParentElements,
   adjustBodyWidth,
   isElementVisible,
 } from "./htmlElement";
 import { customTransitionDuration } from "../../globalConstant";
-import { store } from "../../index";
 
-const Tree = ({ nodeTOTO, id }) => {
+const Tree = ({ id }) => {
   let treeContainerRef;
   let treeRef;
 
-  // const isRoot = node.id === "root";
   const isRoot = id === "root";
 
   const node = () => {
@@ -26,17 +23,14 @@ const Tree = ({ nodeTOTO, id }) => {
   };
 
   const nodes = () => {
-    // return node.subNodes;
     return node().subNodesId.map((idNode) => getNodeById(idNode));
   };
 
   const isExpanded = () => {
-    // return node.isExpanded;
     return node().isExpanded;
   };
 
   const height = () => {
-    // return node.height;
     return node().height;
   };
 
