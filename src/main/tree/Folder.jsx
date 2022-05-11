@@ -67,6 +67,9 @@ const ArrowIcon = ({ node, toggleExpanded }) => {
   );
 };
 
+// TODO: Big task
+//      rework the fetchSubNodes logic to display elements during the fetch and not waiting until
+//      the end of the fetch to display the first elements.
 async function fetchSubNodes(node, fetchState, setFetchState) {
   if (fetchState() !== "done") {
     try {
