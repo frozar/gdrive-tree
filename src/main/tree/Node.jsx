@@ -2,15 +2,9 @@ import File from "./File";
 import Folder from "./Folder";
 import { isFolder } from "./node";
 
-const Node = ({ node, setHeight, mustAutofocus }) => {
+const Node = ({ node, mustAutofocus }) => {
   if (isFolder(node)) {
-    return (
-      <Folder
-        node={node}
-        setParentHeight={setHeight}
-        mustAutofocus={mustAutofocus}
-      />
-    );
+    return <Folder node={node} mustAutofocus={mustAutofocus} />;
   } else {
     return <File node={node} mustAutofocus={mustAutofocus} />;
   }

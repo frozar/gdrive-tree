@@ -4,6 +4,8 @@ import { getRicherNodes, isFolder } from "./tree/node";
 import { tokenClient } from "../init";
 import { store, setStore } from "../index";
 
+import { rootId } from "./../globalConstant";
+
 /**
  * Maps a node id to an array of children nodes.
  */
@@ -88,10 +90,8 @@ async function loopRequest(listOptions) {
         // Deal with the response for a new token
         tokenClient.callback = (resp) => {
           if (resp.error !== undefined) {
-            // setStore("isAuthorized", () => false);
             reject(resp);
           }
-          // setStore("isAuthorized", () => true);
           resolve(resp);
         };
         // Ask for a new token
@@ -256,14 +256,36 @@ export async function triggerFilesRequest(initSwitch) {
 
   let newNodes = await grabFiles(initSwitch);
 
-  const richerNodes = getRicherNodes(newNodes, store.nodes.rootNode);
-  if (!_.isEqual(store.nodes.rootNode.subNodes, richerNodes)) {
-    setStore("nodes", (current) => ({
-      ...current,
-      isInitialised: true,
-      isLoading: false,
-      rootNode: { ...current.rootNode, subNodes: richerNodes },
-    }));
+  const richerNodes = getRicherNodes(newNodes, store.nodes.content[rootId].id);
+
+  const nodesToUpdate = {};
+  let hasUpdated = false;
+
+  const newSubNodesId = richerNodes.map((n) => n.id);
+  if (!_.isEqual(store.nodes.content["root"].subNodesId, newSubNodesId)) {
+    nodesToUpdate["root"] = {
+      ...store.nodes.content["root"],
+      subNodesId: newSubNodesId,
+    };
+    hasUpdated = true;
+  }
+
+  for (const node of richerNodes) {
+    if (!_.isEqual(node, store.nodes.content[node.id])) {
+      nodesToUpdate[node.id] = node;
+      hasUpdated = true;
+    }
+  }
+
+  if (hasUpdated) {
+    if (Object.keys(nodesToUpdate).length) {
+      setStore("nodes", (current) => ({
+        ...current,
+        isInitialised: true,
+        isLoading: false,
+        content: { ...current.content, ...nodesToUpdate },
+      }));
+    }
   } else {
     setStore("nodes", (current) => ({
       ...current,

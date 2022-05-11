@@ -3,33 +3,35 @@ import { createEffect, onMount, onCleanup } from "solid-js";
 import { tabbable } from "tabbable";
 
 import Node from "./Node";
-import { setNodeInStoreById, getNodeById, isFolder } from "./node";
+import { setNodeById, getNodeById, isFolder } from "./node";
 import {
   findNearestLowerFocusableElement,
   findNearestUpperLiWithId,
-  getParentElements,
   adjustBodyWidth,
   isElementVisible,
 } from "./htmlElement";
 import { customTransitionDuration } from "../../globalConstant";
-import { store } from "../../index";
 
-const Tree = ({ node }) => {
+const Tree = ({ id }) => {
   let treeContainerRef;
   let treeRef;
 
-  const isRoot = node.id === "root";
+  const isRoot = id === "root";
+
+  const node = () => {
+    return getNodeById(id);
+  };
 
   const nodes = () => {
-    return node.subNodes;
+    return node().subNodesId.map((idNode) => getNodeById(idNode));
   };
 
   const isExpanded = () => {
-    return node.isExpanded;
+    return node().isExpanded;
   };
 
   const height = () => {
-    return node.height;
+    return node().height;
   };
 
   function findFocusableElement(
@@ -132,7 +134,7 @@ const Tree = ({ node }) => {
       if (id === null) {
         return null;
       }
-      return getNodeById(store.nodes.rootNode, id, true);
+      return getNodeById(id, true);
     }
 
     if (event.code === "ArrowRight") {
@@ -144,7 +146,7 @@ const Tree = ({ node }) => {
       }
 
       if (isFolder(activeNode) && !activeNode.isExpanded) {
-        setNodeInStoreById(activeNode.id, {
+        setNodeById(activeNode.id, {
           isExpanded: true,
         });
       } else if (isFolder(activeNode)) {
@@ -162,7 +164,7 @@ const Tree = ({ node }) => {
 
       if (isFolder(activeNode) && activeNode.isExpanded) {
         // Retract the folder
-        setNodeInStoreById(activeNode.id, {
+        setNodeById(activeNode.id, {
           isExpanded: false,
         });
       } else {
@@ -190,7 +192,7 @@ const Tree = ({ node }) => {
       }
       if (isFolder(activeNode)) {
         if (!activeNode.isExpanded) {
-          setNodeInStoreById(activeNode.id, {
+          setNodeById(activeNode.id, {
             isExpanded: true,
           });
         }
@@ -207,7 +209,7 @@ const Tree = ({ node }) => {
         return;
       }
       if (isFolder(activeNode)) {
-        setNodeInStoreById(id, {
+        setNodeById(id, {
           isExpanded: !activeNode.isExpanded,
         });
       }

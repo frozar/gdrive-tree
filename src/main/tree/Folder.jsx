@@ -2,7 +2,13 @@ import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 
 import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
 import Tree from "./index";
-import { setNodeInStoreById, getRicherNodes, getNodePathByNode } from "./node";
+import {
+  setNodeById,
+  getRicherNodes,
+  getNodePathByNode,
+  setNodesContent,
+  getNodeById,
+} from "./node";
 import {
   findChildElementWithPredicat,
   findNearestLowerFocusableElement,
@@ -12,7 +18,6 @@ import {
 
 import SpinningWheel from "../../SpinningWheel";
 import { customTransitionDuration } from "../../globalConstant";
-import { store } from "../../index";
 
 // TODO: use solidjs-icon librairy
 const ArrowIcon = ({ node, toggleExpanded }) => {
@@ -66,11 +71,12 @@ async function fetchSubNodes(node, fetchState, setFetchState) {
   if (fetchState() !== "done") {
     try {
       setFetchState("running");
-      // TODO : enbedded deeper the call to the getRicherNodes() function
-      const nodes = await getSortedNodesFromDirectory(999, "*", node.id);
-      const richerNodes = getRicherNodes(nodes, node);
 
-      setNodeInStoreById(node.id, { subNodes: richerNodes });
+      const nodes = await getSortedNodesFromDirectory(999, "*", node.id);
+      const richerNodes = getRicherNodes(nodes, node.id);
+
+      setNodesContent(richerNodes);
+      setNodeById(node.id, { subNodesId: richerNodes.map((n) => n.id) });
 
       setFetchState("done");
     } catch (error) {
@@ -80,7 +86,7 @@ async function fetchSubNodes(node, fetchState, setFetchState) {
   }
 }
 
-const Folder = ({ node, setParentHeight, mustAutofocus }) => {
+const Folder = ({ node, mustAutofocus }) => {
   const [fetchState, setFetchState] = createSignal("init");
 
   const SmallSpinningWheel = () => {
@@ -88,7 +94,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   };
 
   function toggleExpanded() {
-    setNodeInStoreById(node.id, { isExpanded: !node.isExpanded });
+    setNodeById(node.id, { isExpanded: !node.isExpanded });
   }
 
   createEffect(() => {
@@ -132,10 +138,10 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
 
       let hasUpdated = false;
       if (node.height === 0 && toExpand) {
-        setNodeInStoreById(node.id, { height: heightToSet });
+        setNodeById(node.id, { height: heightToSet });
         hasUpdated = true;
       } else if (node.height !== 0 && !toExpand) {
-        setNodeInStoreById(node.id, { height: 0 });
+        setNodeById(node.id, { height: 0 });
         hasUpdated = true;
       }
 
@@ -148,7 +154,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
         return;
       }
 
-      setNodeInStoreById(id, (obj) => ({
+      setNodeById(id, (obj) => ({
         height: obj.height + incrementHeight,
       }));
     }
@@ -177,7 +183,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
   });
 
   const isParentExpanded = () => {
-    return node.parentNode.isExpanded;
+    return getNodeById(node.parentNodeId).isExpanded;
   };
 
   // Fetch only if the parent tree has been expanded once.
@@ -197,7 +203,6 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
     }
   }
 
-  // TODO: fix the body width in case a long name is focus and so scale up
   function handleFocus(e) {
     setTimeout(() => {
       adjustBodyWidth();
@@ -253,6 +258,8 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
         if (e.detail === 2) {
           toggleExpanded();
         }
+        // TODO : handle case if it's a cell phone that make the 'click'.
+        //        maybe a 'tap' event is available
       }}
     >
       <span class="folder-surrounding-span">
@@ -298,9 +305,7 @@ const Folder = ({ node, setParentHeight, mustAutofocus }) => {
         </span>
         {fetchState() === "running" && <SmallSpinningWheel />}
       </span>
-      {fetchState() === "done" && (
-        <Tree node={node} setParentHeight={setParentHeight} />
-      )}
+      {fetchState() === "done" && <Tree id={node.id} />}
     </li>
   );
 };
