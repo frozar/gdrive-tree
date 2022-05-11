@@ -24,11 +24,17 @@ const defaultRootNode = (() => {
   return res;
 })();
 
+function getDefaultContent() {
+  const defaultContent = new Map();
+  defaultContent.set("root", defaultRootNode);
+  return defaultContent;
+}
+
 const defaultStore = {
   isExternalLibLoaded: false,
   hasCredential: false,
   nodes: {
-    content: { root: defaultRootNode },
+    content: getDefaultContent(),
     isInitialised: false,
     isLoading: false,
   },

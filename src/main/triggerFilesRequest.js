@@ -256,22 +256,22 @@ export async function triggerFilesRequest(initSwitch) {
 
   let newNodes = await grabFiles(initSwitch);
 
-  const richerNodes = getRicherNodes(newNodes, store.nodes.content[rootId].id);
+  const richerNodes = getRicherNodes(newNodes, rootId);
 
   const nodesToUpdate = {};
   let hasUpdated = false;
 
   const newSubNodesId = richerNodes.map((n) => n.id);
-  if (!_.isEqual(store.nodes.content["root"].subNodesId, newSubNodesId)) {
+  if (!_.isEqual(store.nodes.content.get("root").subNodesId, newSubNodesId)) {
     nodesToUpdate["root"] = {
-      ...store.nodes.content["root"],
+      ...store.nodes.content.get("root"),
       subNodesId: newSubNodesId,
     };
     hasUpdated = true;
   }
 
   for (const node of richerNodes) {
-    if (!_.isEqual(node, store.nodes.content[node.id])) {
+    if (!_.isEqual(node, store.nodes.content.get(node.id))) {
       nodesToUpdate[node.id] = node;
       hasUpdated = true;
     }
@@ -279,12 +279,18 @@ export async function triggerFilesRequest(initSwitch) {
 
   if (hasUpdated) {
     if (Object.keys(nodesToUpdate).length) {
-      setStore("nodes", (current) => ({
-        ...current,
-        isInitialised: true,
-        isLoading: false,
-        content: { ...current.content, ...nodesToUpdate },
-      }));
+      setStore("nodes", (current) => {
+        const newContent = current.content;
+        for (const [idNode, node] of Object.entries(nodesToUpdate)) {
+          newContent.set(idNode, node);
+        }
+        return {
+          ...current,
+          isInitialised: true,
+          isLoading: false,
+          contente: newContent,
+        };
+      });
     }
   } else {
     setStore("nodes", (current) => ({

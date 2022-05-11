@@ -23,7 +23,11 @@ const Tree = ({ id }) => {
   };
 
   const nodes = () => {
-    return node().subNodesId.map((idNode) => getNodeById(idNode));
+    if (!node().subNodesId) {
+      return [];
+    } else {
+      return node().subNodesId.map((idNode) => getNodeById(idNode));
+    }
   };
 
   const isExpanded = () => {

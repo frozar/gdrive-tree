@@ -4,7 +4,7 @@ import _ from "lodash";
 import { store, setStore } from "../../index";
 
 function getNodeById_(nodes, id) {
-  const node = nodes.content[id];
+  const node = nodes.content.get(id);
   if (!node) {
     return null;
   }
@@ -28,7 +28,7 @@ export function getNodePathByNode(node) {
 }
 
 function setNodeById_(nodes, id, objUpdatesOrFunctionUpdates) {
-  const targetNode = nodes.content[id];
+  const targetNode = nodes.content.get(id);
 
   if (!targetNode) {
     console.error(`Cannot find targetNode for id: [${id}]`);
@@ -52,25 +52,25 @@ function setNodeById_(nodes, id, objUpdatesOrFunctionUpdates) {
 
   for (const [k, v] of Object.entries(objUpdates)) {
     if (!_.isEqual(targetNode[k], v)) {
-      targetNode[k] = v;
+      nodes.content.set(k, v);
     }
   }
-}
-
-export function setNodesContent(nodes) {
-  setStore(
-    produce((s) => {
-      for (const node of nodes) {
-        s.nodes.content[node.id] = node;
-      }
-    })
-  );
 }
 
 export function setNodeById(id, objUpdatesOrFunctionUpdates) {
   setStore(
     produce((s) => {
       setNodeById_(s.nodes, id, objUpdatesOrFunctionUpdates);
+    })
+  );
+}
+
+export function setNodesContent(nodes) {
+  setStore(
+    produce((s) => {
+      for (const node of nodes) {
+        s.nodes.content.set(node.id, node);
+      }
     })
   );
 }
