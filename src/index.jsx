@@ -6,12 +6,13 @@ import "./index.css";
 import "./init";
 import App from "./App";
 import { getRicherNode } from "./main/tree/node";
+import { rootId } from "./globalConstant";
 
 const defaultRootNode = (() => {
   const res = {
     ...getRicherNode(
       {
-        id: "root",
+        id: rootId,
         name: "ROOT",
         mimeType: "application/vnd.google-apps.folder",
       },

@@ -4,6 +4,8 @@ import { getRicherNodes, isFolder } from "./tree/node";
 import { tokenClient } from "../init";
 import { store, setStore } from "../index";
 
+import { rootId } from "./../globalConstant";
+
 /**
  * Maps a node id to an array of children nodes.
  */
@@ -254,7 +256,7 @@ export async function triggerFilesRequest(initSwitch) {
 
   let newNodes = await grabFiles(initSwitch);
 
-  const richerNodes = getRicherNodes(newNodes, store.nodes.content["root"].id);
+  const richerNodes = getRicherNodes(newNodes, store.nodes.content[rootId].id);
 
   const nodesToUpdate = {};
   let hasUpdated = false;
