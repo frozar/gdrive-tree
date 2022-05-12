@@ -110,6 +110,11 @@ async function loopRequest(listOptions) {
 
   // TODO : loop the request if there is more files to load
   return new Promise(async (resolve, reject) => {
+    const savedToken = localStorage.getItem("ACCESS_TOKEN");
+    if (savedToken) {
+      gapi.client.setToken(JSON.parse(savedToken));
+    }
+
     let nextPageToken;
     let files;
     try {
@@ -118,10 +123,15 @@ async function loopRequest(listOptions) {
     } catch (err) {
       console.info("First call to google API failed.");
       console.info(err);
+
       if (gapi.client.getToken() === null) {
         console.info("Ask consentment");
         getToken("consent")
           .then(async (resp) => {
+            localStorage.setItem(
+              "ACCESS_TOKEN",
+              JSON.stringify(gapi.client.getToken())
+            );
             [files, nextPageToken] = await grabFiles(
               listOptions,
               nextPageToken
