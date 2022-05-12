@@ -76,10 +76,13 @@ async function fetchSubNodes(node, fetchState, setFetchState) {
       setFetchState("running");
 
       const nodes = await getSortedNodesFromDirectory(999, "*", node.id);
-      const richerNodes = getRicherNodes(nodes, node.id);
+      // const richerNodes = getRicherNodes(nodes, node.id);
 
-      setNodesContent(richerNodes);
-      setNodeById(node.id, { subNodesId: richerNodes.map((n) => n.id) });
+      // setNodesContent(richerNodes);
+      // setNodeById(node.id, { subNodesId: richerNodes.map((n) => n.id) });
+      // console.log("fetchSubNodes nodes", nodes);
+      setNodesContent(nodes);
+      setNodeById(node.id, { subNodesId: nodes.map((n) => n.id) });
 
       setFetchState("done");
     } catch (error) {
@@ -186,6 +189,7 @@ const Folder = ({ node, mustAutofocus }) => {
   });
 
   const isParentExpanded = () => {
+    // console.log("isParentExpanded node", node);
     return getNodeById(node.parentNodeId).isExpanded;
   };
 

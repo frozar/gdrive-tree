@@ -6,48 +6,10 @@ import { store, setStore } from "../index";
 
 import { rootId } from "./../globalConstant";
 
-/**
- * Maps a node id to an array of children nodes.
- */
-const nodesCache = {};
-
-function buildFilesListArg(args) {
-  const result = {};
-
-  const authorisedKeys = [
-    "pageSize",
-    "fields",
-    "q",
-    "folderId",
-    "pageToken",
-    "spaces",
-    "includeItemsFromAllDrives",
-    "includeTeamDriveItems",
-    "supportsAllDrives",
-    "supportsTeamDrives",
-    "orderBy",
-  ];
-
-  for (const key of Object.keys(args)) {
-    if (!authorisedKeys.includes(key)) {
-      continue;
-    }
-    if (key === "folderId") {
-      const folderId = args[key];
-      if (folderId) {
-        result.q = "'" + folderId + "' in parents and trashed = false";
-      }
-    } else {
-      result[key] = args[key];
-    }
-  }
-
-  return result;
-}
-
-function gFilesList(listOptions) {
-  return gapi.client.drive.files.list(buildFilesListArg(listOptions));
-}
+// /**
+//  * Maps a node id to an array of children nodes.
+//  */
+// const nodesCache = {};
 
 async function loopRequest(listOptions) {
   /**
@@ -57,25 +19,86 @@ async function loopRequest(listOptions) {
    * @param {object} listOptions : necessary to build the request to google
    * @returns Array of files
    */
-  async function grabFiles(listOptions) {
-    const result = [];
-    let nextPageToken;
-    do {
-      const response = await gFilesList({
-        ...listOptions,
-        pageToken: nextPageToken,
-      });
+  // async function grabFiles_(listOptions) {
+  //   const result = [];
+  //   let nextPageToken;
+  //   do {
+  //     const response = await gFilesList({
+  //       ...listOptions,
+  //       pageToken: nextPageToken,
+  //     });
 
-      nextPageToken = response.result.nextPageToken;
-      if (response.result.files.length <= 0) {
-        nextPageToken = null;
-        break;
+  //     nextPageToken = response.result.nextPageToken;
+  //     if (response.result.files.length <= 0) {
+  //       nextPageToken = null;
+  //       break;
+  //     }
+  //     for (const file of response.result.files) {
+  //       result.push(file);
+  //     }
+  //   } while (nextPageToken);
+  //   return result;
+  // }
+
+  function buildFilesListArg(args) {
+    const result = {};
+
+    const authorisedKeys = [
+      "pageSize",
+      "fields",
+      "q",
+      "folderId",
+      "pageToken",
+      "spaces",
+      "includeItemsFromAllDrives",
+      "includeTeamDriveItems",
+      "supportsAllDrives",
+      "supportsTeamDrives",
+      "orderBy",
+    ];
+
+    for (const key of Object.keys(args)) {
+      if (!authorisedKeys.includes(key)) {
+        continue;
       }
-      for (const file of response.result.files) {
-        result.push(file);
+      if (key === "folderId") {
+        const folderId = args[key];
+        if (folderId) {
+          result.q = "'" + folderId + "' in parents and trashed = false";
+        }
+      } else {
+        result[key] = args[key];
       }
-    } while (nextPageToken);
+    }
+
     return result;
+  }
+
+  function gFilesList(listOptions) {
+    return gapi.client.drive.files.list(buildFilesListArg(listOptions));
+  }
+
+  async function grabFiles(listOptions, nextPageToken) {
+    // const result = [];
+    // let nextPageToken;
+    // do {
+    const response = await gFilesList({
+      ...listOptions,
+      pageToken: nextPageToken,
+    });
+
+    return [response.result.files, response.result.nextPageToken];
+
+    // nextPageToken = response.result.nextPageToken;
+    // if (response.result.files.length <= 0) {
+    //   nextPageToken = null;
+    //   // break;
+    // }
+    // for (const file of response.result.files) {
+    //   result.push(file);
+    // }
+    // } while (nextPageToken);
+    // return result;
   }
 
   /**
@@ -104,10 +127,13 @@ async function loopRequest(listOptions) {
     });
   }
 
+  // TODO : loop the request if there is more files to load
   return new Promise(async (resolve, reject) => {
+    let nextPageToken;
+    let files;
     try {
-      const result = await grabFiles(listOptions);
-      resolve(result);
+      [files, nextPageToken] = await grabFiles(listOptions, nextPageToken);
+      resolve(files);
     } catch (err) {
       console.info("First call to google API failed.");
       console.info(err);
@@ -115,8 +141,11 @@ async function loopRequest(listOptions) {
         console.info("Ask consentment");
         getToken("consent")
           .then(async (resp) => {
-            const result = await grabFiles(listOptions);
-            resolve(result);
+            [files, nextPageToken] = await grabFiles(
+              listOptions,
+              nextPageToken
+            );
+            resolve(files);
           })
           .catch((err) => {
             console.error("Cannot call google API.");
@@ -127,8 +156,11 @@ async function loopRequest(listOptions) {
         console.info("Renew consentment");
         getToken("consent")
           .then(async (resp) => {
-            const result = await grabFiles(listOptions);
-            resolve(result);
+            [files, nextPageToken] = await grabFiles(
+              listOptions,
+              nextPageToken
+            );
+            resolve(files);
           })
           .catch((err) => {
             console.error("Cannot call google API.");
@@ -154,33 +186,22 @@ async function higherGetSortedNodes(
   getSortedNodesFunction,
   pageSize,
   fields,
-  folderId
+  folderId,
+  parentNodeId
 ) {
   const nodes = await getSortedNodesFunction(pageSize, fields, folderId);
   nodes.sort(sortNodesDirectoryFirst);
-  return nodes;
-}
+  // return nodes;
 
-const folderIdDict = {};
+  // console.log("parentNodeId", parentNodeId);
+  // console.trace();
+  const richerNodes = getRicherNodes(nodes, parentNodeId);
 
-function addFolderId(folderId) {
-  folderIdDict[folderId] = true;
-}
-
-function retrieveFolderIds(nodes) {
-  nodes.forEach((node) => {
-    // console.log("node", node);
-    if (isFolder(node)) {
-      addFolderId(node.id);
-    }
-  });
+  // console.log("richerNodes", richerNodes);
+  return richerNodes;
 }
 
 async function getNodesFromDirectory(pageSize, fields, folderId) {
-  if (nodesCache[folderId]) {
-    return nodesCache[folderId];
-  }
-
   const result = await loopRequest({
     pageSize,
     fields,
@@ -190,20 +211,7 @@ async function getNodesFromDirectory(pageSize, fields, folderId) {
     spaces: "drive",
   });
 
-  retrieveFolderIds(result);
-
-  nodesCache[folderId] = [...result];
-
   return result;
-}
-
-export async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
-  return await higherGetSortedNodes(
-    getNodesFromDirectory,
-    pageSize,
-    fields,
-    folderId
-  );
 }
 
 async function getSharedNodes(pageSize, fields) {
@@ -219,20 +227,81 @@ async function getSharedNodes(pageSize, fields) {
   return result;
 }
 
-async function getSortedSharedNodes(pageSize, fields) {
-  return await higherGetSortedNodes(getSharedNodes, pageSize, fields);
+async function getEveryNodes(pageSize, fields) {
+  const result = await loopRequest({
+    pageSize,
+    fields,
+    includeItemsFromAllDrives: true,
+    supportsAllDrives: true,
+    spaces: "drive",
+  });
+
+  return result;
+}
+
+export async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
+  return await higherGetSortedNodes(
+    getNodesFromDirectory,
+    pageSize,
+    fields,
+    folderId,
+    folderId
+  );
 }
 
 async function initNodesFromRoot() {
-  return await getSortedNodesFromDirectory(999, "*", "root");
+  return await getSortedNodesFromDirectory(999, "*", rootId);
+}
+
+async function getSortedSharedNodes(pageSize, fields, folderId, parentNodeId) {
+  return await higherGetSortedNodes(
+    getSharedNodes,
+    pageSize,
+    fields,
+    folderId,
+    parentNodeId
+  );
 }
 
 async function initSharedNodes() {
-  return await getSortedSharedNodes(999, "*");
+  return await getSortedSharedNodes(999, "*", rootId, rootId);
+}
+
+async function getSortedEveryNodes(pageSize, fields, folderId, parentNodeId) {
+  return await higherGetSortedNodes(
+    getEveryNodes,
+    pageSize,
+    fields,
+    folderId,
+    parentNodeId
+  );
 }
 
 async function initEveryNodes() {
-  return await getSortedEveryNodes(999, "*");
+  return await getSortedEveryNodes(999, "*", rootId, rootId);
+}
+
+function computeHasUpdated(richerNodes) {
+  const nodesToUpdate = {};
+  let hasUpdated = false;
+
+  const newSubNodesId = richerNodes.map((n) => n.id);
+  if (!_.isEqual(store.nodes.content["root"].subNodesId, newSubNodesId)) {
+    nodesToUpdate["root"] = {
+      ...store.nodes.content["root"],
+      subNodesId: newSubNodesId,
+    };
+    hasUpdated = true;
+  }
+
+  for (const node of richerNodes) {
+    if (!_.isEqual(node, store.nodes.content[node.id])) {
+      nodesToUpdate[node.id] = node;
+      hasUpdated = true;
+    }
+  }
+
+  return [hasUpdated, nodesToUpdate];
 }
 
 export async function triggerFilesRequest(initSwitch) {
@@ -256,26 +325,11 @@ export async function triggerFilesRequest(initSwitch) {
 
   let newNodes = await grabFiles(initSwitch);
 
-  const richerNodes = getRicherNodes(newNodes, store.nodes.content[rootId].id);
+  // const richerNodes = getRicherNodes(newNodes, store.nodes.content[rootId].id);
 
-  const nodesToUpdate = {};
-  let hasUpdated = false;
-
-  const newSubNodesId = richerNodes.map((n) => n.id);
-  if (!_.isEqual(store.nodes.content["root"].subNodesId, newSubNodesId)) {
-    nodesToUpdate["root"] = {
-      ...store.nodes.content["root"],
-      subNodesId: newSubNodesId,
-    };
-    hasUpdated = true;
-  }
-
-  for (const node of richerNodes) {
-    if (!_.isEqual(node, store.nodes.content[node.id])) {
-      nodesToUpdate[node.id] = node;
-      hasUpdated = true;
-    }
-  }
+  const [hasUpdated, nodesToUpdate] = computeHasUpdated(newNodes);
+  // console.log("hasUpdated", hasUpdated);
+  // console.log("nodesToUpdate", nodesToUpdate);
 
   if (hasUpdated) {
     if (Object.keys(nodesToUpdate).length) {
