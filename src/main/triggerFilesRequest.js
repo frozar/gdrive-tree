@@ -6,40 +6,7 @@ import { store, setStore } from "../index";
 
 import { rootId } from "./../globalConstant";
 
-// /**
-//  * Maps a node id to an array of children nodes.
-//  */
-// const nodesCache = {};
-
 async function loopRequest(listOptions) {
-  /**
-   * Make as many requests that are necessary to retrieve the content of
-   * a folder.
-   *
-   * @param {object} listOptions : necessary to build the request to google
-   * @returns Array of files
-   */
-  // async function grabFiles_(listOptions) {
-  //   const result = [];
-  //   let nextPageToken;
-  //   do {
-  //     const response = await gFilesList({
-  //       ...listOptions,
-  //       pageToken: nextPageToken,
-  //     });
-
-  //     nextPageToken = response.result.nextPageToken;
-  //     if (response.result.files.length <= 0) {
-  //       nextPageToken = null;
-  //       break;
-  //     }
-  //     for (const file of response.result.files) {
-  //       result.push(file);
-  //     }
-  //   } while (nextPageToken);
-  //   return result;
-  // }
-
   function buildFilesListArg(args) {
     const result = {};
 
@@ -78,27 +45,41 @@ async function loopRequest(listOptions) {
     return gapi.client.drive.files.list(buildFilesListArg(listOptions));
   }
 
+  /**
+   * Make as many requests that are necessary to retrieve the content of
+   * a folder.
+   *
+   * @param {object} listOptions : necessary to build the request to google
+   * @returns Array of files
+   */
+  // async function grabFiles_(listOptions) {
+  //   const result = [];
+  //   let nextPageToken;
+  //   do {
+  //     const response = await gFilesList({
+  //       ...listOptions,
+  //       pageToken: nextPageToken,
+  //     });
+
+  //     nextPageToken = response.result.nextPageToken;
+  //     if (response.result.files.length <= 0) {
+  //       nextPageToken = null;
+  //       break;
+  //     }
+  //     for (const file of response.result.files) {
+  //       result.push(file);
+  //     }
+  //   } while (nextPageToken);
+  //   return result;
+  // }
+
   async function grabFiles(listOptions, nextPageToken) {
-    // const result = [];
-    // let nextPageToken;
-    // do {
     const response = await gFilesList({
       ...listOptions,
       pageToken: nextPageToken,
     });
 
     return [response.result.files, response.result.nextPageToken];
-
-    // nextPageToken = response.result.nextPageToken;
-    // if (response.result.files.length <= 0) {
-    //   nextPageToken = null;
-    //   // break;
-    // }
-    // for (const file of response.result.files) {
-    //   result.push(file);
-    // }
-    // } while (nextPageToken);
-    // return result;
   }
 
   /**
@@ -191,13 +172,9 @@ async function higherGetSortedNodes(
 ) {
   const nodes = await getSortedNodesFunction(pageSize, fields, folderId);
   nodes.sort(sortNodesDirectoryFirst);
-  // return nodes;
 
-  // console.log("parentNodeId", parentNodeId);
-  // console.trace();
   const richerNodes = getRicherNodes(nodes, parentNodeId);
 
-  // console.log("richerNodes", richerNodes);
   return richerNodes;
 }
 
@@ -325,11 +302,7 @@ export async function triggerFilesRequest(initSwitch) {
 
   let newNodes = await grabFiles(initSwitch);
 
-  // const richerNodes = getRicherNodes(newNodes, store.nodes.content[rootId].id);
-
   const [hasUpdated, nodesToUpdate] = computeHasUpdated(newNodes);
-  // console.log("hasUpdated", hasUpdated);
-  // console.log("nodesToUpdate", nodesToUpdate);
 
   if (hasUpdated) {
     if (Object.keys(nodesToUpdate).length) {
