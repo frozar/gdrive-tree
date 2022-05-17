@@ -1,10 +1,16 @@
-import { createSignal, createEffect, Show, onMount } from "solid-js";
+import { createEffect, Show, onMount } from "solid-js";
 
-import { store, setStore } from "../index";
 import Tree from "./tree";
-import SpinningWheel from "../SpinningWheel";
-import { checkHasCredential } from "../checkHasCredential";
 import { triggerFilesRequest } from "./triggerFilesRequest";
+import { store } from "../index";
+import {
+  checkAccessToken,
+  removeAccessToken,
+  setAccessToken,
+  getAccessToken,
+} from "../token";
+import SpinningWheel from "../SpinningWheel";
+import { rootId } from "../globalConstant";
 
 const ShowFilesButton = ({ initSwitch }) => {
   onMount(() => {
@@ -49,18 +55,39 @@ const ShowFilesButton = ({ initSwitch }) => {
 };
 
 const TreeContainer = ({ initSwitch }) => {
-  createEffect(checkHasCredential);
+  const isReady = () => {
+    return (
+      store.hasValidToken && store.nodes.isInitialised && !store.nodes.isLoading
+    );
+  };
+
+  createEffect(async () => {
+    const accessTokenString = getAccessToken();
+
+    function responseHandler(data) {
+      if (data.error) {
+        removeAccessToken();
+      } else {
+        setAccessToken(accessTokenObject);
+
+        triggerFilesRequest(initSwitch);
+      }
+    }
+
+    function errorHandler(error) {
+      console.error(error);
+      removeAccessToken();
+    }
+
+    checkAccessToken(accessTokenString, responseHandler, errorHandler);
+  });
 
   return (
     <Show
-      when={
-        store.hasCredential &&
-        store.nodes.isInitialised &&
-        !store.nodes.isLoading
-      }
+      when={isReady()}
       fallback={<ShowFilesButton initSwitch={initSwitch} />}
     >
-      <Tree id="root" />
+      <Tree id={rootId} />
     </Show>
   );
 };

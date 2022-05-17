@@ -3,6 +3,7 @@ import _ from "lodash";
 import { getRicherNodes, isFolder } from "./tree/node";
 import { tokenClient } from "../init";
 import { store, setStore } from "../index";
+import { removeAccessToken, setAccessToken } from "../token";
 
 import { rootId } from "./../globalConstant";
 
@@ -110,11 +111,6 @@ async function loopRequest(listOptions) {
 
   // TODO : loop the request if there is more files to load
   return new Promise(async (resolve, reject) => {
-    const savedToken = localStorage.getItem("ACCESS_TOKEN");
-    if (savedToken) {
-      gapi.client.setToken(JSON.parse(savedToken));
-    }
-
     let nextPageToken;
     let files;
     try {
@@ -128,10 +124,7 @@ async function loopRequest(listOptions) {
         console.info("Ask consentment");
         getToken("consent")
           .then(async (resp) => {
-            localStorage.setItem(
-              "ACCESS_TOKEN",
-              JSON.stringify(gapi.client.getToken())
-            );
+            setAccessToken(gapi.client.getToken());
             [files, nextPageToken] = await grabFiles(
               listOptions,
               nextPageToken
@@ -139,6 +132,7 @@ async function loopRequest(listOptions) {
             resolve(files);
           })
           .catch((err) => {
+            removeAccessToken();
             console.error("Cannot call google API.");
             console.error(err);
             reject(err);
@@ -147,6 +141,7 @@ async function loopRequest(listOptions) {
         console.info("Renew consentment");
         getToken("consent")
           .then(async (resp) => {
+            setAccessToken(gapi.client.getToken());
             [files, nextPageToken] = await grabFiles(
               listOptions,
               nextPageToken
@@ -154,6 +149,7 @@ async function loopRequest(listOptions) {
             resolve(files);
           })
           .catch((err) => {
+            removeAccessToken();
             console.error("Cannot call google API.");
             console.error(err);
             reject(err);

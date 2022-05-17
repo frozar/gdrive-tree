@@ -1,15 +1,13 @@
 import { createSignal, createEffect } from "solid-js";
 
-import { store, setStore } from "../index";
-import { checkHasCredential } from "../checkHasCredential";
+import { store } from "../index";
+import { removeAccessToken } from "../token";
 
 const NavBar = () => {
   let [buttonStyle, setButtonStyle] = createSignal("btn-disabled");
 
-  createEffect(checkHasCredential);
-
   createEffect(() => {
-    if (store.hasCredential) {
+    if (store.hasValidToken) {
       setButtonStyle(() => "");
     } else {
       setButtonStyle(() => "btn-disabled");
@@ -18,7 +16,7 @@ const NavBar = () => {
 
   function handleClick() {
     google.accounts.oauth2.revoke(gapi.client.getToken().access_token, () =>
-      setStore("hasCredential", () => false)
+      removeAccessToken()
     );
   }
 

@@ -26,7 +26,7 @@ const defaultRootNode = (() => {
 
 const defaultStore = {
   isExternalLibLoaded: false,
-  hasCredential: false,
+  hasValidToken: false,
   nodes: {
     content: { root: defaultRootNode },
     isInitialised: false,

@@ -17,12 +17,19 @@ function gapiInit() {
   gapi.client
     .init({})
     .then(function () {
-      gapi.client.load(
-        "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"
-      );
-      gapiInited = true;
-      checkBeforeStart();
-      console.info("Gapi lib loaded");
+      const URLDriveDiscovery =
+        "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
+      gapi.client
+        .load(URLDriveDiscovery)
+        .then(() => {
+          gapiInited = true;
+          checkBeforeStart();
+          console.info("Gapi lib loaded");
+        })
+        .catch((err) => {
+          console.error(`Cannot load Gapi lib ${URLDriveDiscovery}`);
+          console.error(err);
+        });
     })
     .catch((err) => {
       console.error("Cannot load Gapi lib");
