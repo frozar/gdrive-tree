@@ -64,7 +64,7 @@ const TreeContainer = ({ initSwitch }) => {
   createEffect(async () => {
     const accessTokenString = getAccessToken();
 
-    function responseHandler(data) {
+    function responseHandler(data, accessTokenObject) {
       if (data.error) {
         removeAccessToken();
       } else {

@@ -20,13 +20,13 @@ export function checkAccessToken(
 
     fetch(verifyTokenURL + accessToken)
       .then((resp) => resp.json())
-      .then(responseHandler)
+      .then((data) => responseHandler(data, accessTokenObject))
       .catch(errorHandler);
   }
 }
 
 export function getAccessToken() {
-  localStorage.getItem(accessTokenField);
+  return localStorage.getItem(accessTokenField);
 }
 
 export function setAccessToken(accessTokenObject) {
