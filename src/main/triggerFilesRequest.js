@@ -46,34 +46,6 @@ async function loopRequest(listOptions) {
     return gapi.client.drive.files.list(buildFilesListArg(listOptions));
   }
 
-  /**
-   * Make as many requests that are necessary to retrieve the content of
-   * a folder.
-   *
-   * @param {object} listOptions : necessary to build the request to google
-   * @returns Array of files
-   */
-  // async function grabFiles_(listOptions) {
-  //   const result = [];
-  //   let nextPageToken;
-  //   do {
-  //     const response = await gFilesList({
-  //       ...listOptions,
-  //       pageToken: nextPageToken,
-  //     });
-
-  //     nextPageToken = response.result.nextPageToken;
-  //     if (response.result.files.length <= 0) {
-  //       nextPageToken = null;
-  //       break;
-  //     }
-  //     for (const file of response.result.files) {
-  //       result.push(file);
-  //     }
-  //   } while (nextPageToken);
-  //   return result;
-  // }
-
   async function grabFiles(listOptions, nextPageToken) {
     const response = await gFilesList({
       ...listOptions,
@@ -159,17 +131,17 @@ async function loopRequest(listOptions) {
   });
 }
 
-function sortNodesDirectoryFirst(node0, node1) {
-  if (isFolder(node0) && !isFolder(node1)) {
-    return -1;
-  } else if (!isFolder(node0) && isFolder(node1)) {
-    return 1;
-  } else {
-    return node0.name.localeCompare(node1.name);
-  }
-}
-
 async function higherGetSortedNodes(getNodesFunction, parentNodeId) {
+  function sortNodesDirectoryFirst(node0, node1) {
+    if (isFolder(node0) && !isFolder(node1)) {
+      return -1;
+    } else if (!isFolder(node0) && isFolder(node1)) {
+      return 1;
+    } else {
+      return node0.name.localeCompare(node1.name);
+    }
+  }
+
   const nodes = await getNodesFunction();
   nodes.sort(sortNodesDirectoryFirst);
 
@@ -183,46 +155,46 @@ const sharedNodesCase = 1;
 const everyNodesCase = 2;
 
 async function getNodes(specificCase, pageSize, fields, folderId) {
-  let result;
+  let requestOptions = {};
   switch (specificCase) {
     case nodesFromDirectoryCase: {
-      result = await loopRequest({
+      requestOptions = {
         pageSize,
         fields,
         includeItemsFromAllDrives: true,
         supportsAllDrives: true,
         folderId,
         spaces: "drive",
-      });
+      };
       break;
     }
     case sharedNodesCase: {
-      result = await loopRequest({
+      requestOptions = {
         pageSize,
         fields,
         includeItemsFromAllDrives: true,
         supportsAllDrives: true,
         q: "sharedWithMe = true",
         spaces: "drive",
-      });
+      };
       break;
     }
     case everyNodesCase: {
-      result = await loopRequest({
+      requestOptions = {
         pageSize,
         fields,
         includeItemsFromAllDrives: true,
         supportsAllDrives: true,
         spaces: "drive",
-      });
+      };
       break;
     }
     default: {
-      result = new Promise((resolve, _) => resolve([]));
+      return new Promise((resolve, _) => resolve([]));
     }
   }
 
-  return result;
+  return await loopRequest(requestOptions);
 }
 
 export async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
@@ -232,30 +204,30 @@ export async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
   );
 }
 
-async function getSortedSharedNodes(pageSize, fields, parentNodeId) {
-  return await higherGetSortedNodes(
-    () => getNodes(sharedNodesCase, pageSize, fields),
-    parentNodeId
-  );
-}
+async function initNodes(specificCase) {
+  const pageSize = 999;
+  const fields = "*";
+  let callback;
+  switch (specificCase) {
+    case nodesFromDirectoryCase: {
+      callback = () =>
+        getNodes(nodesFromDirectoryCase, pageSize, fields, rootId);
+      break;
+    }
+    case sharedNodesCase: {
+      callback = () => getNodes(sharedNodesCase, pageSize, fields);
+      break;
+    }
+    case everyNodesCase: {
+      callback = () => getNodes(everyNodesCase, pageSize, fields);
+      break;
+    }
+    default: {
+      return new Promise((resolve, _) => resolve([]));
+    }
+  }
 
-async function getSortedEveryNodes(pageSize, fields, parentNodeId) {
-  return await higherGetSortedNodes(
-    () => getNodes(everyNodesCase, pageSize, fields),
-    parentNodeId
-  );
-}
-
-async function initNodesFromRoot() {
-  return await getSortedNodesFromDirectory(999, "*", rootId);
-}
-
-async function initSharedNodes() {
-  return await getSortedSharedNodes(999, "*", rootId);
-}
-
-async function initEveryNodes() {
-  return await getSortedEveryNodes(999, "*", rootId);
+  return await higherGetSortedNodes(callback, rootId);
 }
 
 function computeHasUpdated(richerNodes) {
@@ -282,20 +254,22 @@ function computeHasUpdated(richerNodes) {
 }
 
 export async function triggerFilesRequest(initSwitch) {
-  function grabFiles(initSwitch) {
+  function initSwitchToSpecificCase(initSwitch) {
     switch (initSwitch) {
       case "drive":
-        return initNodesFromRoot();
+        return nodesFromDirectoryCase;
       case "shared":
-        return initSharedNodes();
+        return sharedNodesCase;
       case "every":
-        return initEveryNodes();
+        return everyNodesCase;
       default:
         console.error(`initSwitch "${initSwitch}" is not handled.`);
-        return new Promise((resolve, reject) => {
-          resolve([]);
-        });
+        return everyNodesCase + 1;
     }
+  }
+
+  function grabFiles(initSwitch) {
+    return initNodes(initSwitchToSpecificCase(initSwitch));
   }
 
   setStore("nodes", (current) => ({ ...current, isLoading: true }));
