@@ -169,14 +169,8 @@ function sortNodesDirectoryFirst(node0, node1) {
   }
 }
 
-async function higherGetSortedNodes(
-  getSortedNodesFunction,
-  pageSize,
-  fields,
-  folderId,
-  parentNodeId
-) {
-  const nodes = await getSortedNodesFunction(pageSize, fields, folderId);
+async function higherGetSortedNodes(getNodesFunction, parentNodeId) {
+  const nodes = await getNodesFunction();
   nodes.sort(sortNodesDirectoryFirst);
 
   const richerNodes = getRicherNodes(nodes, parentNodeId);
@@ -184,51 +178,71 @@ async function higherGetSortedNodes(
   return richerNodes;
 }
 
-async function getNodesFromDirectory(pageSize, fields, folderId) {
-  const result = await loopRequest({
-    pageSize,
-    fields,
-    includeItemsFromAllDrives: true,
-    supportsAllDrives: true,
-    folderId,
-    spaces: "drive",
-  });
+const nodesFromDirectoryCase = 0;
+const sharedNodesCase = 1;
+const everyNodesCase = 2;
 
-  return result;
-}
-
-async function getSharedNodes(pageSize, fields) {
-  const result = await loopRequest({
-    pageSize,
-    fields,
-    includeItemsFromAllDrives: true,
-    supportsAllDrives: true,
-    q: "sharedWithMe = true",
-    spaces: "drive",
-  });
-
-  return result;
-}
-
-async function getEveryNodes(pageSize, fields) {
-  const result = await loopRequest({
-    pageSize,
-    fields,
-    includeItemsFromAllDrives: true,
-    supportsAllDrives: true,
-    spaces: "drive",
-  });
+async function getNodes(specificCase, pageSize, fields, folderId) {
+  let result;
+  switch (specificCase) {
+    case nodesFromDirectoryCase: {
+      result = await loopRequest({
+        pageSize,
+        fields,
+        includeItemsFromAllDrives: true,
+        supportsAllDrives: true,
+        folderId,
+        spaces: "drive",
+      });
+      break;
+    }
+    case sharedNodesCase: {
+      result = await loopRequest({
+        pageSize,
+        fields,
+        includeItemsFromAllDrives: true,
+        supportsAllDrives: true,
+        q: "sharedWithMe = true",
+        spaces: "drive",
+      });
+      break;
+    }
+    case everyNodesCase: {
+      result = await loopRequest({
+        pageSize,
+        fields,
+        includeItemsFromAllDrives: true,
+        supportsAllDrives: true,
+        spaces: "drive",
+      });
+      break;
+    }
+    default: {
+      result = new Promise((resolve, _) => resolve([]));
+    }
+  }
 
   return result;
 }
 
 export async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
   return await higherGetSortedNodes(
-    getNodesFromDirectory,
-    pageSize,
-    fields,
-    folderId,
+    () => getNodes(nodesFromDirectoryCase, pageSize, fields, folderId),
     folderId
+  );
+}
+
+async function getSortedSharedNodes(pageSize, fields, parentNodeId) {
+  return await higherGetSortedNodes(
+    () => getNodes(sharedNodesCase, pageSize, fields),
+    parentNodeId
+  );
+}
+
+async function getSortedEveryNodes(pageSize, fields, parentNodeId) {
+  return await higherGetSortedNodes(
+    () => getNodes(everyNodesCase, pageSize, fields),
+    parentNodeId
   );
 }
 
@@ -236,32 +250,12 @@ async function initNodesFromRoot() {
   return await getSortedNodesFromDirectory(999, "*", rootId);
 }
 
-async function getSortedSharedNodes(pageSize, fields, folderId, parentNodeId) {
-  return await higherGetSortedNodes(
-    getSharedNodes,
-    pageSize,
-    fields,
-    folderId,
-    parentNodeId
-  );
-}
-
 async function initSharedNodes() {
-  return await getSortedSharedNodes(999, "*", rootId, rootId);
-}
-
-async function getSortedEveryNodes(pageSize, fields, folderId, parentNodeId) {
-  return await higherGetSortedNodes(
-    getEveryNodes,
-    pageSize,
-    fields,
-    folderId,
-    parentNodeId
-  );
+  return await getSortedSharedNodes(999, "*", rootId);
 }
 
 async function initEveryNodes() {
-  return await getSortedEveryNodes(999, "*", rootId, rootId);
+  return await getSortedEveryNodes(999, "*", rootId);
 }
 
 function computeHasUpdated(richerNodes) {
