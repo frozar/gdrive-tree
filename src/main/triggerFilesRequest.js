@@ -109,7 +109,7 @@ async function loopRequest(listOptions) {
     });
   }
 
-  // TODO : loop the request if there is more files to load
+  // TODO : NEXT : loop the request if there is more files to load
   return new Promise(async (resolve, reject) => {
     let nextPageToken;
     let files;
