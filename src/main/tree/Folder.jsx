@@ -1,6 +1,6 @@
 import { createSignal, createEffect, onMount, onCleanup } from "solid-js";
 
-import { getSortedNodesFromDirectory } from "../triggerFilesRequest";
+import { updateNode } from "../triggerFilesRequest";
 import Tree from "./index";
 import {
   setNodeById,
@@ -74,10 +74,7 @@ async function fetchSubNodes(node, fetchState, setFetchState) {
     try {
       setFetchState("running");
 
-      const nodes = await getSortedNodesFromDirectory(999, "*", node.id);
-
-      setNodesContent(nodes);
-      setNodeById(node.id, { subNodesId: nodes.map((n) => n.id) });
+      await updateNode(node.id);
 
       setFetchState("done");
     } catch (error) {

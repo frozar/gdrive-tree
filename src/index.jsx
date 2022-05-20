@@ -28,7 +28,7 @@ const defaultStore = {
   isExternalLibLoaded: false,
   hasValidToken: false,
   nodes: {
-    content: { root: defaultRootNode },
+    content: { [rootId]: defaultRootNode },
     isInitialised: false,
     isLoading: false,
   },

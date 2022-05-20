@@ -4,9 +4,9 @@ import { getRicherNodes, isFolder } from "./tree/node";
 import { tokenClient } from "../init";
 import { store, setStore } from "../index";
 import { removeAccessToken, setAccessToken } from "../token";
+import { rootId } from "../globalConstant";
 
-import { rootId } from "./../globalConstant";
-
+// TODO : be able to update the content of a directory one call after the other
 async function loopRequest(listOptions) {
   function buildFilesListArg(args) {
     const result = {};
@@ -42,11 +42,11 @@ async function loopRequest(listOptions) {
     return result;
   }
 
-  function gFilesList(listOptions) {
-    return gapi.client.drive.files.list(buildFilesListArg(listOptions));
-  }
-
   async function grabFiles(listOptions, nextPageToken) {
+    function gFilesList(listOptions) {
+      return gapi.client.drive.files.list(buildFilesListArg(listOptions));
+    }
+
     const response = await gFilesList({
       ...listOptions,
       pageToken: nextPageToken,
@@ -131,7 +131,7 @@ async function loopRequest(listOptions) {
   });
 }
 
-async function higherGetSortedNodes(getNodesFunction, parentNodeId) {
+async function higherGetSortedNodes(fetchNodesFunction, parentNodeId) {
   function sortNodesDirectoryFirst(node0, node1) {
     if (isFolder(node0) && !isFolder(node1)) {
       return -1;
@@ -142,7 +142,7 @@ async function higherGetSortedNodes(getNodesFunction, parentNodeId) {
     }
   }
 
-  const nodes = await getNodesFunction();
+  const nodes = await fetchNodesFunction();
   nodes.sort(sortNodesDirectoryFirst);
 
   const richerNodes = getRicherNodes(nodes, parentNodeId);
@@ -154,7 +154,7 @@ const nodesFromDirectoryCase = 0;
 const sharedNodesCase = 1;
 const everyNodesCase = 2;
 
-async function getNodes(specificCase, pageSize, fields, folderId) {
+async function fetchNodes(specificCase, pageSize, fields, folderId) {
   let requestOptions = {};
   switch (specificCase) {
     case nodesFromDirectoryCase: {
@@ -163,8 +163,8 @@ async function getNodes(specificCase, pageSize, fields, folderId) {
         fields,
         includeItemsFromAllDrives: true,
         supportsAllDrives: true,
-        folderId,
         spaces: "drive",
+        folderId,
       };
       break;
     }
@@ -197,101 +197,120 @@ async function getNodes(specificCase, pageSize, fields, folderId) {
   return await loopRequest(requestOptions);
 }
 
-export async function getSortedNodesFromDirectory(pageSize, fields, folderId) {
-  return await higherGetSortedNodes(
-    () => getNodes(nodesFromDirectoryCase, pageSize, fields, folderId),
-    folderId
-  );
-}
+// TODO: do more local diffs between object to upgrade state at small granularity
+function updateNodesContent(newNodes, parentFolderId) {
+  function computeHasUpdated(newNodes, parentFolderId) {
+    const nodesToUpdate = {};
+    let hasUpdated = false;
 
-async function initNodes(specificCase) {
-  const pageSize = 999;
-  const fields = "*";
-  let callback;
-  switch (specificCase) {
-    case nodesFromDirectoryCase: {
-      callback = () =>
-        getNodes(nodesFromDirectoryCase, pageSize, fields, rootId);
-      break;
-    }
-    case sharedNodesCase: {
-      callback = () => getNodes(sharedNodesCase, pageSize, fields);
-      break;
-    }
-    case everyNodesCase: {
-      callback = () => getNodes(everyNodesCase, pageSize, fields);
-      break;
-    }
-    default: {
-      return new Promise((resolve, _) => resolve([]));
-    }
-  }
-
-  return await higherGetSortedNodes(callback, rootId);
-}
-
-function computeHasUpdated(richerNodes) {
-  const nodesToUpdate = {};
-  let hasUpdated = false;
-
-  const newSubNodesId = richerNodes.map((n) => n.id);
-  if (!_.isEqual(store.nodes.content["root"].subNodesId, newSubNodesId)) {
-    nodesToUpdate["root"] = {
-      ...store.nodes.content["root"],
-      subNodesId: newSubNodesId,
-    };
-    hasUpdated = true;
-  }
-
-  for (const node of richerNodes) {
-    if (!_.isEqual(node, store.nodes.content[node.id])) {
-      nodesToUpdate[node.id] = node;
+    const newSubNodesId = newNodes.map((n) => n.id);
+    if (
+      !_.isEqual(
+        new Set(store.nodes.content[parentFolderId].subNodesId),
+        new Set(newSubNodesId)
+      )
+    ) {
+      nodesToUpdate[parentFolderId] = {
+        ...store.nodes.content[parentFolderId],
+        subNodesId: newSubNodesId,
+      };
       hasUpdated = true;
     }
+
+    for (const node of newNodes) {
+      if (!_.isEqual(node, store.nodes.content[node.id])) {
+        nodesToUpdate[node.id] = node;
+        hasUpdated = true;
+      }
+    }
+
+    return [hasUpdated, nodesToUpdate];
   }
 
-  return [hasUpdated, nodesToUpdate];
+  const [hasUpdated, nodesToUpdate] = computeHasUpdated(
+    newNodes,
+    parentFolderId
+  );
+
+  if (hasUpdated) {
+    // if (parentFolderId === "root") {
+    //   console.log("parentFolderId", parentFolderId);
+    //   console.log("nodesToUpdate", nodesToUpdate);
+    // }
+    if (Object.keys(nodesToUpdate).length) {
+      setStore("nodes", (current) => ({
+        ...current,
+        content: { ...current.content, ...nodesToUpdate },
+      }));
+    }
+  }
+}
+
+export async function updateNode(folderId) {
+  const pageSize = 999;
+  const fields = "*";
+  const newNodes = await higherGetSortedNodes(
+    () => fetchNodes(nodesFromDirectoryCase, pageSize, fields, folderId),
+    folderId
+  );
+
+  updateNodesContent(newNodes, folderId);
 }
 
 export async function triggerFilesRequest(initSwitch) {
-  function initSwitchToSpecificCase(initSwitch) {
-    switch (initSwitch) {
-      case "drive":
-        return nodesFromDirectoryCase;
-      case "shared":
-        return sharedNodesCase;
-      case "every":
-        return everyNodesCase;
-      default:
-        console.error(`initSwitch "${initSwitch}" is not handled.`);
-        return everyNodesCase + 1;
-    }
-  }
+  function triggerInitFilesRequest(initSwitch) {
+    async function initNodes(specificCase, folderId) {
+      const pageSize = 999;
+      const fields = "*";
+      let callback;
+      switch (specificCase) {
+        case nodesFromDirectoryCase: {
+          callback = () =>
+            fetchNodes(nodesFromDirectoryCase, pageSize, fields, folderId);
+          break;
+        }
+        case sharedNodesCase: {
+          callback = () => fetchNodes(sharedNodesCase, pageSize, fields);
+          break;
+        }
+        case everyNodesCase: {
+          callback = () => fetchNodes(everyNodesCase, pageSize, fields);
+          break;
+        }
+        default: {
+          return new Promise((resolve, _) => resolve([]));
+        }
+      }
 
-  function grabFiles(initSwitch) {
-    return initNodes(initSwitchToSpecificCase(initSwitch));
+      return await higherGetSortedNodes(callback, folderId);
+    }
+
+    function initSwitchToSpecificCase(initSwitch) {
+      switch (initSwitch) {
+        case "drive":
+          return nodesFromDirectoryCase;
+        case "shared":
+          return sharedNodesCase;
+        case "every":
+          return everyNodesCase;
+        default:
+          console.error(`initSwitch "${initSwitch}" is not handled.`);
+          return everyNodesCase + 1;
+      }
+    }
+
+    return initNodes(initSwitchToSpecificCase(initSwitch), rootId);
   }
 
   setStore("nodes", (current) => ({ ...current, isLoading: true }));
 
-  let newNodes = await grabFiles(initSwitch);
+  const newNodes = await triggerInitFilesRequest(initSwitch);
 
-  const [hasUpdated, nodesToUpdate] = computeHasUpdated(newNodes);
+  updateNodesContent(newNodes, rootId);
 
-  if (hasUpdated) {
-    if (Object.keys(nodesToUpdate).length) {
-      setStore("nodes", (current) => ({
-        ...current,
-        isInitialised: true,
-        isLoading: false,
-        content: { ...current.content, ...nodesToUpdate },
-      }));
-    }
-  } else {
-    setStore("nodes", (current) => ({
-      ...current,
-      isInitialised: true,
-      isLoading: false,
-    }));
-  }
+  setStore("nodes", (current) => ({
+    ...current,
+    isInitialised: true,
+    isLoading: false,
+  }));
 }

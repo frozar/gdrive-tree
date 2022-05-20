@@ -23,7 +23,9 @@ const Tree = ({ id }) => {
   };
 
   const nodes = () => {
-    return node().subNodesId.map((idNode) => getNodeById(idNode));
+    return node().subNodesId
+      ? node().subNodesId.map((idNode) => getNodeById(idNode))
+      : [];
   };
 
   const isExpanded = () => {
@@ -329,6 +331,8 @@ const Tree = ({ id }) => {
           <For each={nodes()}>
             {(node, nodeIndex) => {
               const mustAutofocus = isRoot && nodeIndex() === 0;
+              // console.log("node.name", node.name);
+              // console.log("mustAutofocus", mustAutofocus);
               return <Node node={node} mustAutofocus={mustAutofocus} />;
             }}
           </For>
